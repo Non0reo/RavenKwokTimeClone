@@ -1,0 +1,13 @@
+assets/font/barlow-1.422/ttf/*
+assets/font/barlow-1.422/*
+
+!assets/font/barlow-1.422/ttf/BarlowCondensed-Bold.ttf
+!assets/font/barlow-1.422/ttf
+
+
+
+assets/font/Plus_Jakarta_Sans/*
+assets/font/Plus_Jakarta_Sans/static/*
+
+!assets/font/Plus_Jakarta_Sans/static
+!assets/font/Plus_Jakarta_Sans/static/PlusJakartaSans-Bold.ttf

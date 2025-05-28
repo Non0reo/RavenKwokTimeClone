@@ -1,19 +1,39 @@
-const oob_kill = 50;
-const maxParticles = 1000; // Maximum number of particles
-const repulsionDistMult = 1.15;
-const defaultParticleSize = 60; // Default size for new particles
-const colors = ['#03fcd3', '#f279e4', '#f2ea79', '#ac79f2', '#ff5996']
+const canvasSizeMultiplier = 1; // Multiplier for canvas size
+
+const oob_kill = canvasSizeMultiplier * 50;
+const maxParticles = 300; // Maximum number of particles
+const repulsionDistMult = canvasSizeMultiplier * 1.5;
+const defaultParticleSize = canvasSizeMultiplier * 60; // Default size for new particles
+const colors = ['#03fcd3', '#f279e4', '#f2ea79', '#ac79f2', '#ff5996'];
+
 
 let hours, minutes, seconds;
 let textParticles = [];
 
+let canvas;
+let font;
+
+function preload() {
+  //font = loadFont('assets/font/Plus_Jakarta_Sans/PlusJakartaSans-VariableFont_wght.ttf'); // Uncomment if you have a custom font
+  //font = loadFont('assets/font/Plus_Jakarta_Sans/static/PlusJakartaSans-Bold.ttf');
+  font = loadFont('assets/font/barlow-1.422/ttf/BarlowCondensed-Bold.ttf'); // Use a bold font for better visibility
+}
+
 function setup() {
-  createCanvas(window.innerWidth / 2, window.innerHeight / 2);
-  textFont('Vina Sans');
+  canvas = createCanvas(window.innerWidth * canvasSizeMultiplier, window.innerHeight * canvasSizeMultiplier, WEBGL);
+  textFont(font);
+  //set size of canvas to half of the window size
+  canvas.style('width', '100%');
+  canvas.style('height', '100%');
+
+  textSize(this.size);
+  //textStyle(BOLD); // Pre-calculate text width for better performance
+
 }
 
 function draw() {
   background(0);
+  translate(-width / 2, -height / 2); // Center the text in the canvas
 
   const temp_seconds = seconds;
 
@@ -84,87 +104,4 @@ function keyPressed() {
     textParticles = []; // Clear particles on spacebar press
   }
   if( key === 'a') timeChanged(seconds); // Trigger time change on 'a' key press
-}
-
-
-class TextParticle {
-  constructor(text, x, y, size) {
-    this.text = text;
-    this.x = x;
-    this.y = y;
-    
-    this.defaultSize = size;
-    this.targetSize = size;
-    this.size = size + 100;
-
-    this.velocity = createVector(0, 0);
-
-    const randomColor = color(random(colors));
-    this.targetColor = randomColor;
-
-    this.color = color(
-      min(red(randomColor) + 100, 255),
-      min(green(randomColor) + 100, 255),
-      min(blue(randomColor) + 100, 255)
-    );
-
-  }
-
-  //create a repulsion force from a point
-  repulsion(point) {
-    let pointDistance = dist(this.x, this.y, point.x, point.y);
-    let pointAngle = atan2(this.y - point.y, this.x - point.x);
-
-    //forces
-    //let pointF = 0.1 / (pointDistance * pointDistance);
-    let pointF = constrain(map(pointDistance, 0, this.size * repulsionDistMult, 10, 0), 0, 2);
-    
-
-    this.velocity.x += pointF * cos(pointAngle);
-    this.velocity.y += pointF * sin(pointAngle);
- 
-  }
-
-  update() {
-    //prevent particles from going out of bounds without killing them
-    if (this.x < -oob_kill || this.x > width + oob_kill || this.y < -oob_kill || this.y > height + oob_kill) {
-      this.x = constrain(this.x, -oob_kill, width + oob_kill);
-      this.y = constrain(this.y, -oob_kill, height + oob_kill);
-    }
-
-    // Apply velocity to position
-    this.velocity.limit(1); // Limit the velocity to prevent excessive speed
-
-    const sizeChange = constrain(map(dist(this.x, this.y, mouseX, mouseY), 0, 300, 0, this.defaultSize), 10, this.defaultSize);
-    this.size = sizeChange; // Update size based on distance to mouse
-
-    this.x += this.velocity.x;
-    this.y += this.velocity.y;
-
-    
-
-    //this.size += (this.targetSize - this.size) * 0.1; // Smoothly transition to target size
-    
-    this.color = lerpColor(this.color, this.targetColor, 0.15); // Smoothly transition to target color
-
-    //this.velocity.set(0, 0); // Reset velocity after applying forces
-    this.velocity.mult(map(sizeChange, 10, this.defaultSize, 0.98, 1.1)); // Dampen the velocity for smoother movement
-
-    /* if (this.x < -oob_kill || this.x > width + oob_kill || this.y < -oob_kill || this.y > height + oob_kill) {
-      textParticles.splice(textParticles.indexOf(this), 1);
-    } */
-
-    
-
-  }
-
-  display() {
-    // fill(128, 0, 0); // Semi-transparent color for debugging
-    // circle(this.x, this.y, this.size * repulsionDistMult); // Debugging circle
-    fill(this.color);
-    textSize(this.size);
-    textAlign(CENTER, CENTER);
-    text(this.text, this.x, this.y);
-  }
-  
 }
