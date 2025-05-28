@@ -26,7 +26,7 @@ class TextParticle {
     let pointDistance = dist(this.x, this.y, point.x, point.y);
     let pointAngle = atan2(this.y - point.y, this.x - point.x);
 
-    let pointF = constrain(map(pointDistance, 0, this.size * repulsionDistMult, 10, 0), 0, 2);
+    let pointF = constrain(map(pointDistance, 0, this.defaultSize * repulsionDistMult, 10, 0), 0, 2);
     
 
     this.velocity.x += pointF * cos(pointAngle);
@@ -44,18 +44,24 @@ class TextParticle {
     // Apply velocity to position
     //this.velocity.limit(5); // Limit the velocity to prevent excessive speed
 
-    const radiusPostion = dist(this.x, this.y, frameCount % width, height/4);
+    //const radiusPostion = dist(this.x, this.y, frameCount % width, height/4);
 
 
 
     
 
-    this.addedSize += (this.targetSize - this.addedSize) * 0.1; // Smoothly transition to target size
-    /* this.size += this.addedSize; */
-    console.log('addedSize:', this.addedSize, 'size:', this.size, 'targetSize:', this.targetSize);
+    // Use a fixed decay factor for addedSize to avoid unnecessary calculations and reduce lag
+    if (abs(this.addedSize) > 0.1) {
+      this.addedSize *= 0.92;
+    } else {
+      this.addedSize = 0;
+    }
+    //this.addedSize = lerp(this.addedSize, 0, 0.1); // Smoothly transition to target size
 
-    const sizeChange = constrain(map(radiusPostion, 0, this.defaultSize * 5, 0, this.defaultSize), this.defaultSize / 8 , this.defaultSize);
-    this.size = sizeChange/*  + this.addedSize */; // Update size based on distance to mouse
+    /* this.size += this.addedSize; */
+
+    //const sizeChange = constrain(map(radiusPostion, 0, this.defaultSize * 5, 0, this.defaultSize), this.defaultSize / 8 , this.defaultSize);
+    this.size = /* sizeChange */this.defaultSize + this.addedSize; // Update size based on distance to mouse
 
     this.x += this.velocity.x;
     this.y += this.velocity.y;
@@ -67,12 +73,14 @@ class TextParticle {
     //this.velocity.set(0, 0);
     //this.velocity.mult(0.8); // Dampen the velocity for smoother movement
     //this.velocity.mult(map(sizeChange, this.defaultSize / 3, this.defaultSize, 1.0, 0.8));
-    const inMouseRadius = radiusPostion < this.defaultSize * 5;
+
+    /* const inMouseRadius = radiusPostion < this.defaultSize * 5;
     if (inMouseRadius) {
-      //this.velocity.mult(0.9); // Dampen the velocity for smoother movement
+      this.velocity.mult(0.8); // Dampen the velocity for smoother movement
     } else {
       this.velocity.mult(0.8); // Slightly less damping when not near the mouse
-    }
+    } */
+    this.velocity.mult(0.8);
 
     /* if (this.x < -oob_kill || this.x > width + oob_kill || this.y < -oob_kill || this.y > height + oob_kill) {
       textParticles.splice(textParticles.indexOf(this), 1);
@@ -86,9 +94,19 @@ class TextParticle {
     // fill(128, 0, 0); // Semi-transparent color for debugging
     // circle(this.x, this.y, this.size * repulsionDistMult); // Debugging circle
     //fill(this.color);
-    fill(lerpColor(this.defaultColor, this.brightColor, 0));
+    fill(lerpColor(this.defaultColor, this.brightColor, this.addedSize / 100));
     textSize(this.size);
     text(this.text, this.x, this.y);
+  }
+
+  debugDisplay() {
+    //draw velocity vector arrow
+    stroke(255, 0, 0);
+    strokeWeight(2);
+    line(this.x, this.y, this.x + this.velocity.x * 10, this.y + this.velocity.y * 10);
+    noStroke();
+    fill(255, 0, 0);
+    circle(this.x, this.y, 5); // Draw a small circle at the particle's position
   }
   
 }

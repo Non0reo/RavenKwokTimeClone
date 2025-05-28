@@ -1,13 +1,16 @@
+p5.disableFriendlyErrors = true;
+
 const canvasSizeMultiplier = 1; // Multiplier for canvas size
 
-const oob_kill = canvasSizeMultiplier * 50;
+const oob_kill = canvasSizeMultiplier * 1 - 30;
 const maxParticles = 300; // Maximum number of particles
-const repulsionDistMult = canvasSizeMultiplier * 1.5;
-const defaultParticleSize = canvasSizeMultiplier * 60; // Default size for new particles
+const repulsionDistMult = canvasSizeMultiplier * 1.1;
+const defaultParticleSize = canvasSizeMultiplier * 30; // Default size for new particles
 const colors = ['#03fcd3', '#f279e4', '#f2ea79', '#ac79f2', '#ff5996'];
 
 
 let hours, minutes, seconds;
+let temp_seconds, temp_minutes, temp_hours;
 let textParticles = [];
 
 let canvas;
@@ -27,6 +30,7 @@ function setup() {
   canvas.style('height', '100%');
 
   textSize(this.size);
+  textAlign(CENTER, CENTER);
   //textStyle(BOLD); // Pre-calculate text width for better performance
 
 }
@@ -35,34 +39,22 @@ function draw() {
   background(0);
   translate(-width / 2, -height / 2); // Center the text in the canvas
 
-  const temp_seconds = seconds;
+
+
 
   let now = new Date();
   hours = now.getHours();
   minutes = now.getMinutes();
   seconds = now.getSeconds();
 
-  if (temp_seconds !== seconds) {
-    timeChanged(seconds);
-  }
+
+  
   /* if (frameCount % 60 === 0) {
     timeChanged(seconds);
   } */
 
-  if (textParticles.length > maxParticles) {
-    textParticles.splice(0, textParticles.length - maxParticles); // Limit the number of particles
-  }
 
-  let timeString = nf(hours, 2) + ':' + nf(minutes, 2) + ':' + nf(seconds, 2);
-  let angle = map(seconds, 0, 60, 0, TWO_PI);
-  
-  fill(255);
-  textSize(48);
-  textAlign(LEFT, TOP);
-  text(timeString, 0, 0);
-  noStroke();
 
-  let numberOfOperations = 0;
   // Make every particle repel from each other
   for (let i = textParticles.length - 1; i >= 0; i--) {
     let particle = textParticles[i];
@@ -71,19 +63,32 @@ function draw() {
     for (let j = 0; j < textParticles.length; j++) {
       if (i !== j) {
 
-        if(dist(particle.x, particle.y, textParticles[j].x, textParticles[j].y) < repulsionDistMult * particle.size) {
+        if(distSquared(particle.x, particle.y, textParticles[j].x, textParticles[j].y) < pow(particle.defaultSize * repulsionDistMult, 2)) {
           particle.repulsion(textParticles[j]);
-          numberOfOperations++;
         }
       }
     }
 
     particle.update();
     particle.display();
+    //particle.debugDisplay();
   }
 
-  console.log(`Number of operations: ${numberOfOperations}`);
+  if (temp_seconds !== seconds) {
+    timeChanged(seconds);
+    temp_seconds = seconds;
+
+    if (temp_minutes !== minutes) {
+      minuteEvent();
+      temp_minutes = minutes;
+    }
+  }
+
+
+  //console.log(`Number of operations: ${numberOfOperations}`);
   
+  displayDebugInfo(); // Display debug information
+  debugCommands(); // Handle debug commands
 }
 
 
@@ -91,17 +96,43 @@ function timeChanged(second) {
   //background(50);
   const rand = random(-50, 50);
 
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 5; i++) {
     textParticles.push(
       new TextParticle( nf(second, 2), random(-oob_kill, width + oob_kill) , 3/4*height + rand , defaultParticleSize )
     );
   }
+}
 
+function minuteEvent() {
+  background(255, 0, 0);
+  
+  if (textParticles.length > maxParticles) {
+    // Randomly remove N particles from anywhere in the array
+    const N = (textParticles.length - maxParticles) + maxParticles * 0.5;
+    for (let i = 0; i < N; i++) {
+      const idx = floor(random(textParticles.length));
+      textParticles.splice(idx, 1);
+    }
+  }
+
+  textParticles.forEach(element => {
+    element.addedSize = 100; // Increase size of all particles
+
+    //random high velocity
+    /* element.velocity.x = random(-50, 50);
+    element.velocity.y = random(-50, 50); */
+    //random high velocity from the center of the canvas
+    const angleFromCenter = atan2(element.y - height / 2, element.x - width / 2);
+
+    element.velocity.x = cos(angleFromCenter);
+    element.velocity.y = sin(angleFromCenter);
+
+    element.velocity.mult(map(distSquared(element.x, element.y, width / 2, height / 2), 0, pow(width, 2), 20, 0)); // Scale velocity based on distance from center
+  });
 }
 
 function keyPressed() {
-  if (key === ' ') {
-    textParticles = []; // Clear particles on spacebar press
-  }
   if( key === 'a') timeChanged(seconds); // Trigger time change on 'a' key press
+  if (key === 'q') minuteEvent(); // Trigger minute event on 's' key press
 }
+
