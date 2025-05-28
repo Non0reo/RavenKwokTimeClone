@@ -2,10 +2,10 @@ p5.disableFriendlyErrors = true;
 
 const canvasSizeMultiplier = 1; // Multiplier for canvas size
 
-const oob_kill = canvasSizeMultiplier * 1 - 30;
+const defaultParticleSize = canvasSizeMultiplier * 100; // Default size for new particles
+const oob_kill = defaultParticleSize / 2;
 const maxParticles = 300; // Maximum number of particles
-const repulsionDistMult = canvasSizeMultiplier * 1.1;
-const defaultParticleSize = canvasSizeMultiplier * 30; // Default size for new particles
+const repulsionDistMult = 1.3;
 const colors = ['#03fcd3', '#f279e4', '#f2ea79', '#ac79f2', '#ff5996'];
 
 
@@ -17,13 +17,12 @@ let canvas;
 let font;
 
 function preload() {
-  //font = loadFont('assets/font/Plus_Jakarta_Sans/PlusJakartaSans-VariableFont_wght.ttf'); // Uncomment if you have a custom font
-  //font = loadFont('assets/font/Plus_Jakarta_Sans/static/PlusJakartaSans-Bold.ttf');
   font = loadFont('assets/font/barlow-1.422/ttf/BarlowCondensed-Bold.ttf'); // Use a bold font for better visibility
 }
 
 function setup() {
-  canvas = createCanvas(window.innerWidth * canvasSizeMultiplier, window.innerHeight * canvasSizeMultiplier, WEBGL);
+  //canvas = createCanvas(window.innerWidth * canvasSizeMultiplier, window.innerHeight * canvasSizeMultiplier, WEBGL);
+  canvas = createCanvas(3600 * canvasSizeMultiplier, 3268 * canvasSizeMultiplier, WEBGL);
   textFont(font);
   //set size of canvas to half of the window size
   canvas.style('width', '100%');
@@ -33,6 +32,11 @@ function setup() {
   textAlign(CENTER, CENTER);
   //textStyle(BOLD); // Pre-calculate text width for better performance
 
+  for (let i = 0; i < 300; i++) {
+    textParticles.push(
+      new TextParticle( "00", width/2 + random(-10,10), height/2 + random(-10,10), defaultParticleSize )
+    );
+  }
 }
 
 function draw() {
@@ -40,19 +44,10 @@ function draw() {
   translate(-width / 2, -height / 2); // Center the text in the canvas
 
 
-
-
   let now = new Date();
   hours = now.getHours();
   minutes = now.getMinutes();
   seconds = now.getSeconds();
-
-
-  
-  /* if (frameCount % 60 === 0) {
-    timeChanged(seconds);
-  } */
-
 
 
   // Make every particle repel from each other
@@ -63,7 +58,7 @@ function draw() {
     for (let j = 0; j < textParticles.length; j++) {
       if (i !== j) {
 
-        if(distSquared(particle.x, particle.y, textParticles[j].x, textParticles[j].y) < pow(particle.defaultSize * repulsionDistMult, 2)) {
+        if(distSquared(particle.position.x, particle.position.y, textParticles[j].position.x, textParticles[j].position.y) < pow(particle.defaultSize * repulsionDistMult, 2)) {
           particle.repulsion(textParticles[j]);
         }
       }
@@ -84,9 +79,6 @@ function draw() {
     }
   }
 
-
-  //console.log(`Number of operations: ${numberOfOperations}`);
-  
   displayDebugInfo(); // Display debug information
   debugCommands(); // Handle debug commands
 }
@@ -94,41 +86,12 @@ function draw() {
 
 function timeChanged(second) {
   //background(50);
-  const rand = random(-50, 50);
 
-  for (let i = 0; i < 5; i++) {
-    textParticles.push(
-      new TextParticle( nf(second, 2), random(-oob_kill, width + oob_kill) , 3/4*height + rand , defaultParticleSize )
-    );
-  }
 }
 
 function minuteEvent() {
-  background(255, 0, 0);
-  
-  if (textParticles.length > maxParticles) {
-    // Randomly remove N particles from anywhere in the array
-    const N = (textParticles.length - maxParticles) + maxParticles * 0.5;
-    for (let i = 0; i < N; i++) {
-      const idx = floor(random(textParticles.length));
-      textParticles.splice(idx, 1);
-    }
-  }
+  //background(255, 0, 0);
 
-  textParticles.forEach(element => {
-    element.addedSize = 100; // Increase size of all particles
-
-    //random high velocity
-    /* element.velocity.x = random(-50, 50);
-    element.velocity.y = random(-50, 50); */
-    //random high velocity from the center of the canvas
-    const angleFromCenter = atan2(element.y - height / 2, element.x - width / 2);
-
-    element.velocity.x = cos(angleFromCenter);
-    element.velocity.y = sin(angleFromCenter);
-
-    element.velocity.mult(map(distSquared(element.x, element.y, width / 2, height / 2), 0, pow(width, 2), 20, 0)); // Scale velocity based on distance from center
-  });
 }
 
 function keyPressed() {

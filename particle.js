@@ -1,14 +1,13 @@
 class TextParticle {
   constructor(text, x, y, size) {
     this.text = text;
-    this.x = x;
-    this.y = y;
     
     this.defaultSize = size;
     this.addedSize = 100;
     this.targetSize = size;
     this.size = size;
 
+    this.position = createVector(x, y);
     this.velocity = createVector(0, 0);
 
     const randomColor = color(random(colors));
@@ -23,8 +22,8 @@ class TextParticle {
   }
 
   repulsion(point) {
-    let pointDistance = dist(this.x, this.y, point.x, point.y);
-    let pointAngle = atan2(this.y - point.y, this.x - point.x);
+    let pointDistance = dist(this.position.x, this.position.y, point.position.x, point.position.y);
+    let pointAngle = atan2(this.position.y - point.position.y, this.position.x - point.position.x);
 
     let pointF = constrain(map(pointDistance, 0, this.defaultSize * repulsionDistMult, 10, 0), 0, 2);
     
@@ -36,15 +35,15 @@ class TextParticle {
 
   update() {
     //prevent particles from going out of bounds without killing them
-    if (this.x < -oob_kill || this.x > width + oob_kill || this.y < -oob_kill || this.y > height + oob_kill) {
-      this.x = constrain(this.x, -oob_kill, width + oob_kill);
-      this.y = constrain(this.y, -oob_kill, height + oob_kill);
+    if (this.position.x < -oob_kill || this.position.x > width + oob_kill || this.position.y < -oob_kill || this.position.y > height + oob_kill) {
+      this.position.x = constrain(this.position.x, -oob_kill, width + oob_kill);
+      this.position.y = constrain(this.position.y, -oob_kill, height + oob_kill);
     }
 
-    // Apply velocity to position
+    // Apply velocity to positionition
     //this.velocity.limit(5); // Limit the velocity to prevent excessive speed
 
-    //const radiusPostion = dist(this.x, this.y, frameCount % width, height/4);
+    //const radiuspositiontion = dist(this.position.x, this.position.y, frameCount % width, height/4);
 
 
 
@@ -60,11 +59,11 @@ class TextParticle {
 
     /* this.size += this.addedSize; */
 
-    //const sizeChange = constrain(map(radiusPostion, 0, this.defaultSize * 5, 0, this.defaultSize), this.defaultSize / 8 , this.defaultSize);
+    //const sizeChange = constrain(map(radiuspositiontion, 0, this.defaultSize * 5, 0, this.defaultSize), this.defaultSize / 8 , this.defaultSize);
     this.size = /* sizeChange */this.defaultSize + this.addedSize; // Update size based on distance to mouse
 
-    this.x += this.velocity.x;
-    this.y += this.velocity.y;
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
     
     //this.color = lerpColor(this.color, this.targetColor, 0.15); // Smoothly transition to target color
 
@@ -74,7 +73,7 @@ class TextParticle {
     //this.velocity.mult(0.8); // Dampen the velocity for smoother movement
     //this.velocity.mult(map(sizeChange, this.defaultSize / 3, this.defaultSize, 1.0, 0.8));
 
-    /* const inMouseRadius = radiusPostion < this.defaultSize * 5;
+    /* const inMouseRadius = radiuspositiontion < this.defaultSize * 5;
     if (inMouseRadius) {
       this.velocity.mult(0.8); // Dampen the velocity for smoother movement
     } else {
@@ -82,7 +81,7 @@ class TextParticle {
     } */
     this.velocity.mult(0.8);
 
-    /* if (this.x < -oob_kill || this.x > width + oob_kill || this.y < -oob_kill || this.y > height + oob_kill) {
+    /* if (this.position.x < -oob_kill || this.position.x > width + oob_kill || this.position.y < -oob_kill || this.position.y > height + oob_kill) {
       textParticles.splice(textParticles.indexOf(this), 1);
     } */
 
@@ -92,21 +91,21 @@ class TextParticle {
 
   display() {
     // fill(128, 0, 0); // Semi-transparent color for debugging
-    // circle(this.x, this.y, this.size * repulsionDistMult); // Debugging circle
+    // circle(this.position.x, this.position.y, this.size * repulsionDistMult); // Debugging circle
     //fill(this.color);
     fill(lerpColor(this.defaultColor, this.brightColor, this.addedSize / 100));
     textSize(this.size);
-    text(this.text, this.x, this.y);
+    text(this.text, this.position.x, this.position.y);
   }
 
   debugDisplay() {
     //draw velocity vector arrow
     stroke(255, 0, 0);
     strokeWeight(2);
-    line(this.x, this.y, this.x + this.velocity.x * 10, this.y + this.velocity.y * 10);
+    line(this.position.x, this.position.y, this.position.x + this.velocity.x * 10, this.position.y + this.velocity.y * 10);
     noStroke();
     fill(255, 0, 0);
-    circle(this.x, this.y, 5); // Draw a small circle at the particle's position
+    circle(this.position.x, this.position.y, 5); // Draw a small circle at the particle's positionition
   }
   
 }
