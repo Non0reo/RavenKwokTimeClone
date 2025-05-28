@@ -23,11 +23,21 @@ function preload() {
 function setup() {
   //canvas = createCanvas(window.innerWidth * canvasSizeMultiplier, window.innerHeight * canvasSizeMultiplier, WEBGL);
   canvas = createCanvas(3600 * canvasSizeMultiplier, 3268 * canvasSizeMultiplier, WEBGL);
-  textFont(font);
-  //set size of canvas to half of the window size
-  canvas.style('width', '100%');
-  canvas.style('height', '100%');
+  const aspectRatio = canvas.width / canvas.height;
 
+  // Make the canvas take maximum space in either width or height, preserving aspect ratio
+  let windowAspect = window.innerWidth / window.innerHeight;
+  if (aspectRatio > windowAspect) {
+    // Canvas is wider than window, fit width
+    canvas.style('width', window.innerWidth + "px");
+    canvas.style('height', (window.innerWidth / aspectRatio) + "px");
+  } else {
+    // Canvas is taller than window, fit height
+    canvas.style('height', window.innerHeight + "px");
+    canvas.style('width', (window.innerHeight * aspectRatio) + "px");
+  }
+
+  textFont(font);
   textSize(this.size);
   textAlign(CENTER, CENTER);
   //textStyle(BOLD); // Pre-calculate text width for better performance
@@ -37,6 +47,10 @@ function setup() {
       new TextParticle( "00", width/2 + random(-10,10), height/2 + random(-10,10), defaultParticleSize )
     );
   }
+
+  textParticles.push(
+    new TextParticle( "8", width/2 + random(-10,10), height/2 + random(-10,10), defaultParticleSize * 20, { isStatic: true, tag: "big" } ),
+  );
 }
 
 function draw() {
@@ -49,6 +63,11 @@ function draw() {
   minutes = now.getMinutes();
   seconds = now.getSeconds();
 
+  /* if(mouseIsPressed) {
+    textParticles.filter(e => e.tag == 'big').forEach(p => {
+      p.position.set(mouseX, mouseY); // Center static particles
+    });
+  } */
 
   // Make every particle repel from each other
   for (let i = textParticles.length - 1; i >= 0; i--) {
@@ -58,7 +77,8 @@ function draw() {
     for (let j = 0; j < textParticles.length; j++) {
       if (i !== j) {
 
-        if(distSquared(particle.position.x, particle.position.y, textParticles[j].position.x, textParticles[j].position.y) < pow(particle.defaultSize * repulsionDistMult, 2)) {
+        //if(distSquared(particle.position.x, particle.position.y, textParticles[j].position.x, textParticles[j].position.y) < pow(particle.defaultSize * repulsionDistMult, 2)) {
+        if(dist(particle.position.x, particle.position.y, textParticles[j].position.x, textParticles[j].position.y) < textParticles[j].defaultSize * repulsionDistMult) {
           particle.repulsion(textParticles[j]);
         }
       }

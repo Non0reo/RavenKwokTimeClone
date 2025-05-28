@@ -1,7 +1,10 @@
 class TextParticle {
-  constructor(text, x, y, size) {
+  constructor(text, x, y, size, options) {
     this.text = text;
-    
+    this.options = options || {};
+    this.isStatic = this.options.isStatic || false; // If true, the particle will not move
+    this.tag = this.options.tag || ""; // Optional tag for the particle
+
     this.defaultSize = size;
     this.addedSize = 100;
     this.targetSize = size;
@@ -18,14 +21,17 @@ class TextParticle {
       min(green(randomColor) + 100, 255),
       min(blue(randomColor) + 100, 255)
     );
-
   }
 
   repulsion(point) {
+    
     let pointDistance = dist(this.position.x, this.position.y, point.position.x, point.position.y);
     let pointAngle = atan2(this.position.y - point.position.y, this.position.x - point.position.x);
 
-    let pointF = constrain(map(pointDistance, 0, this.defaultSize * repulsionDistMult, 10, 0), 0, 2);
+    // Use the sum of both particles' radii for collision/repulsion distance
+    let combinedSize = (this.size + point.size) / 2;
+    let repulsionRadius = combinedSize * repulsionDistMult;
+    let pointF = constrain(map(pointDistance, 0, repulsionRadius, 10, 0), 0, 2);
     
 
     this.velocity.x += pointF * cos(pointAngle);
@@ -34,6 +40,7 @@ class TextParticle {
   }
 
   update() {
+
     //prevent particles from going out of bounds without killing them
     if (this.position.x < -oob_kill || this.position.x > width + oob_kill || this.position.y < -oob_kill || this.position.y > height + oob_kill) {
       this.position.x = constrain(this.position.x, -oob_kill, width + oob_kill);
@@ -43,62 +50,41 @@ class TextParticle {
     // Apply velocity to positionition
     //this.velocity.limit(5); // Limit the velocity to prevent excessive speed
 
-    //const radiuspositiontion = dist(this.position.x, this.position.y, frameCount % width, height/4);
-
-
-
-    
-
     // Use a fixed decay factor for addedSize to avoid unnecessary calculations and reduce lag
     if (abs(this.addedSize) > 0.1) {
       this.addedSize *= 0.92;
     } else {
       this.addedSize = 0;
     }
-    //this.addedSize = lerp(this.addedSize, 0, 0.1); // Smoothly transition to target size
 
-    /* this.size += this.addedSize; */
+    this.size = this.defaultSize + this.addedSize; // Update size based on distance to mouse
 
-    //const sizeChange = constrain(map(radiuspositiontion, 0, this.defaultSize * 5, 0, this.defaultSize), this.defaultSize / 8 , this.defaultSize);
-    this.size = /* sizeChange */this.defaultSize + this.addedSize; // Update size based on distance to mouse
-
-    this.position.x += this.velocity.x;
-    this.position.y += this.velocity.y;
+    if (!this.isStatic) {
+      this.position.x += this.velocity.x;
+      this.position.y += this.velocity.y;
+    }
     
-    //this.color = lerpColor(this.color, this.targetColor, 0.15); // Smoothly transition to target color
-
-    //this.velocity.set(0, 0); // Reset velocity after applying forces
-    //this.velocity.mult(map(sizeChange, this.defaultSize / 3, this.defaultSize, 0.98, 1.0)); // Dampen the velocity for smoother movement
-    //this.velocity.set(0, 0);
-    //this.velocity.mult(0.8); // Dampen the velocity for smoother movement
-    //this.velocity.mult(map(sizeChange, this.defaultSize / 3, this.defaultSize, 1.0, 0.8));
-
-    /* const inMouseRadius = radiuspositiontion < this.defaultSize * 5;
-    if (inMouseRadius) {
-      this.velocity.mult(0.8); // Dampen the velocity for smoother movement
-    } else {
-      this.velocity.mult(0.8); // Slightly less damping when not near the mouse
-    } */
     this.velocity.mult(0.8);
+
 
     /* if (this.position.x < -oob_kill || this.position.x > width + oob_kill || this.position.y < -oob_kill || this.position.y > height + oob_kill) {
       textParticles.splice(textParticles.indexOf(this), 1);
     } */
 
-    
-
   }
 
   display() {
-    // fill(128, 0, 0); // Semi-transparent color for debugging
-    // circle(this.position.x, this.position.y, this.size * repulsionDistMult); // Debugging circle
-    //fill(this.color);
-    fill(lerpColor(this.defaultColor, this.brightColor, this.addedSize / 100));
+    
+    this.isStatic ? fill(255) : fill(lerpColor(this.defaultColor, this.brightColor, this.addedSize / 100));
     textSize(this.size);
+    textAlign(CENTER, CENTER);
     text(this.text, this.position.x, this.position.y);
   }
 
   debugDisplay() {
+    fill(128, 0, 0, 130); // Semi-transparent color for debugging
+    circle(this.position.x, this.position.y, this.size * repulsionDistMult); // Debugging circle
+
     //draw velocity vector arrow
     stroke(255, 0, 0);
     strokeWeight(2);
