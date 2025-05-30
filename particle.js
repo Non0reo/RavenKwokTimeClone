@@ -1,16 +1,22 @@
 class TextParticle {
-  constructor(text, x, y, size, options) {
-    this.text = text;
+  constructor(options) {
+    console.log("TextParticle created with options:", options);
+
     this.options = options || {};
+    this.text = this.options.text || ""; // Default to empty string if no text is provided
+    this.position = createVector(this.options.x || 0, this.options.y || 0);
     this.isStatic = this.options.isStatic || false; // If true, the particle will not move
     this.tag = this.options.tag || ""; // Optional tag for the particle
+    this.doColision = this.options.doColision !== undefined ? this.options.doColision : true; // Default to true if not specified
+    this.textSizeAdded = this.options.textSizeAdded || 0; // Additional collision force, default to 0
 
-    this.defaultSize = size;
+    const sizeIn = this.options.size || 0; // Default size if not provided
+
+    this.defaultSize = sizeIn;
     this.addedSize = 100;
-    this.targetSize = size;
-    this.size = size;
+    this.size = sizeIn;
 
-    this.position = createVector(x, y);
+    
     this.velocity = createVector(0, 0);
 
     const randomColor = color(random(colors));
@@ -24,19 +30,20 @@ class TextParticle {
   }
 
   repulsion(point) {
-    
-    let pointDistance = dist(this.position.x, this.position.y, point.position.x, point.position.y);
-    let pointAngle = atan2(this.position.y - point.position.y, this.position.x - point.position.x);
+      if (!this.doColision || !point.doColision) return; // Skip if not colliding or static
+      
+      let pointDistance = dist(this.position.x, this.position.y, point.position.x, point.position.y);
+      let pointAngle = atan2(this.position.y - point.position.y, this.position.x - point.position.x);
 
-    // Use the sum of both particles' radii for collision/repulsion distance
-    let combinedSize = (this.size + point.size) / 2;
-    let repulsionRadius = combinedSize * repulsionDistMult;
-    let pointF = constrain(map(pointDistance, 0, repulsionRadius, 10, 0), 0, 2);
-    
+      // Use the sum of both particles' radii for collision/repulsion distance
+      let combinedSize = (this.size + point.size) / 2;
+      let repulsionRadius = combinedSize * repulsionDistMult;
+      let pointF = constrain(map(pointDistance, 0, repulsionRadius, 10, 0), 0, 2);
+      
 
-    this.velocity.x += pointF * cos(pointAngle);
-    this.velocity.y += pointF * sin(pointAngle);
- 
+      this.velocity.x += pointF * cos(pointAngle);
+      this.velocity.y += pointF * sin(pointAngle);
+
   }
 
   update() {
@@ -59,7 +66,7 @@ class TextParticle {
 
     this.size = this.defaultSize + this.addedSize; // Update size based on distance to mouse
 
-    if (!this.isStatic) {
+    if (!this.isStatic && this.doColision) {
       this.position.x += this.velocity.x;
       this.position.y += this.velocity.y;
     }
@@ -76,9 +83,9 @@ class TextParticle {
   display() {
     
     this.isStatic ? fill(255) : fill(lerpColor(this.defaultColor, this.brightColor, this.addedSize / 100));
-    textSize(this.size);
+    textSize(this.size + this.textSizeAdded);
     textAlign(CENTER, CENTER);
-    text(this.text, this.position.x, this.position.y);
+    text(this.text, this.position.x, this.position.y - this.size / 8);
   }
 
   debugDisplay() {
@@ -94,4 +101,36 @@ class TextParticle {
     circle(this.position.x, this.position.y, 5); // Draw a small circle at the particle's positionition
   }
   
+}
+
+
+class Force {
+  constructor(options) {
+    this.options = options || {};
+    this.position = createVector(this.options.x || 0, this.options.y || 0);
+    this.defaultSize = this.options.strength || 0;
+    this.size = this.defaultSize;
+    this.isStatic = true; // Static force, does not move
+    this.tag = this.options.tag || ""; // Tag for identification
+    this.doColision = this.options.doColision; // Static forces do not repel particles
+
+    console.log("Force created at", this.position.x, this.position.y, "with strength", this.size);
+  }
+
+  repulsion(point) {
+    // Skip repulsion logic for static force
+  }
+
+  update() {
+    // No update logic needed for static force
+  }
+
+  display() {
+    // Display the force as a circle
+  }
+
+  debugDisplay() {
+    fill(255, 0, 0, 130); // Semi-transparent color for debugging
+    circle(this.position.x, this.position.y, this.size * repulsionDistMult); // Debugging circle
+  }
 }

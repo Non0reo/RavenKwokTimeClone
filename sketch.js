@@ -1,6 +1,6 @@
 p5.disableFriendlyErrors = true;
 
-const canvasSizeMultiplier = 1; // Multiplier for canvas size
+const canvasSizeMultiplier = 0.2; // Multiplier for canvas size
 
 const defaultParticleSize = canvasSizeMultiplier * 100; // Default size for new particles
 const oob_kill = defaultParticleSize / 2;
@@ -42,32 +42,57 @@ function setup() {
   textAlign(CENTER, CENTER);
   //textStyle(BOLD); // Pre-calculate text width for better performance
 
-  for (let i = 0; i < 300; i++) {
+  for (let i = 0; i < 700; i++) {
     textParticles.push(
-      new TextParticle( "00", width/2 + random(-10,10), height/2 + random(-10,10), defaultParticleSize )
+      //new TextParticle( "00", width/2 + random(-10,10), height/2 + random(-10,10), defaultParticleSize )
+      new TextParticle({
+        text: "8",
+        x: width / 2 + random(-10, 10),
+        y: height / 2 + random(-10, 10),
+        size: defaultParticleSize,
+      })
     );
   }
 
   textParticles.push(
-    new TextParticle( "8", width/2 + random(-10,10), height/2 + random(-10,10), defaultParticleSize * 20, { isStatic: true, tag: "big" } ),
+    //new TextParticle( "8", width/2 + random(-10,10), height/2 + random(-10,10), defaultParticleSize * 20, { isStatic: true, tag: "big", doColision: false } ),
+    new TextParticle({
+      text: "8",
+      x: width / 2 + random(-10, 10),
+      y: height / 2 + random(-10, 10),
+      size: defaultParticleSize * 10,
+      isStatic: true,
+      tag: "big",
+      doColision: false,
+      textSizeAdded: 20,
+    })
   );
+  textParticles.push(
+    //new Force( width / 2, height / 2+30, canvasSizeMultiplier * 500 ) // Add a force at the center of the canvas
+    new Force({
+      x: width / 2,
+      y: height / 2 + 30,
+      strength: canvasSizeMultiplier * 500,
+      doColision: true,
+    })
+  )
 }
 
 function draw() {
   background(0);
   translate(-width / 2, -height / 2); // Center the text in the canvas
 
-
   let now = new Date();
   hours = now.getHours();
   minutes = now.getMinutes();
   seconds = now.getSeconds();
 
-  /* if(mouseIsPressed) {
-    textParticles.filter(e => e.tag == 'big').forEach(p => {
+  if(mouseIsPressed) {
+    /* textParticles.filter(e => e.tag == 'big').forEach(p => {
       p.position.set(mouseX, mouseY); // Center static particles
-    });
-  } */
+    }); */
+    textParticles[textParticles.length - 1].position.set(mouseX, mouseY);
+  }
 
   // Make every particle repel from each other
   for (let i = textParticles.length - 1; i >= 0; i--) {
@@ -85,9 +110,15 @@ function draw() {
     }
 
     particle.update();
-    particle.display();
+    particle.display(); 
     //particle.debugDisplay();
   }
+
+  // Display all particles
+  /* for (const particle of textParticles) {
+    particle.update();
+    particle.display();
+  } */
 
   if (temp_seconds !== seconds) {
     timeChanged(seconds);
