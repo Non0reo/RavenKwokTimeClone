@@ -2,7 +2,7 @@ p5.disableFriendlyErrors = true;
 
 const canvasSizeMultiplier = 0.2; // Multiplier for canvas size
 
-const defaultParticleSize = canvasSizeMultiplier * 100; // Default size for new particles
+const defaultParticleSize = canvasSizeMultiplier * 80; // Default size for new particles
 const oob_kill = defaultParticleSize / 2;
 const maxParticles = 300; // Maximum number of particles
 const repulsionDistMult = 1.3;
@@ -15,9 +15,12 @@ let textParticles = [];
 
 let canvas;
 let font;
+let fontData;
+let rawFont;
 
 function preload() {
-  font = loadFont('assets/font/barlow-1.422/ttf/BarlowCondensed-Bold.ttf'); // Use a bold font for better visibility
+  fontData = loadBytes('assets/font/barlow-1.422/ttf/BarlowCondensed-Bold.ttf'); // Use a bold font for better visibility
+  rawFont = loadFont('assets/font/barlow-1.422/ttf/BarlowCondensed-Bold.ttf'); // Load the font for text rendering
 }
 
 function setup() {
@@ -37,37 +40,48 @@ function setup() {
     canvas.style('width', (window.innerHeight * aspectRatio) + "px");
   }
 
-  textFont(font);
+  font = opentype.parse(fontData.bytes.buffer);
+  console.log("Font loaded:", font);
+
+  textFont(rawFont);
   textSize(this.size);
   textAlign(CENTER, CENTER);
   //textStyle(BOLD); // Pre-calculate text width for better performance
 
-  for (let i = 0; i < 700; i++) {
+  for (let i = 0; i < 1000; i++) {
     textParticles.push(
       //new TextParticle( "00", width/2 + random(-10,10), height/2 + random(-10,10), defaultParticleSize )
-      new TextParticle({
-        text: "8",
+      /* new TextParticle({
+        text: "5",
         x: width / 2 + random(-10, 10),
         y: height / 2 + random(-10, 10),
+        size: defaultParticleSize,
+      }) */
+     new TextParticle({
+        text: "5",
+        x: random(width),
+        y: random(height),
         size: defaultParticleSize,
       })
     );
   }
 
-  textParticles.push(
+  textParticles.unshift(
     //new TextParticle( "8", width/2 + random(-10,10), height/2 + random(-10,10), defaultParticleSize * 20, { isStatic: true, tag: "big", doColision: false } ),
     new TextParticle({
-      text: "8",
+      text: "5",
       x: width / 2 + random(-10, 10),
       y: height / 2 + random(-10, 10),
-      size: defaultParticleSize * 10,
+      size: defaultParticleSize * 32,
       isStatic: true,
       tag: "big",
       doColision: false,
       textSizeAdded: 20,
+      hasStroke: true,
+      doDrawTextPath: true,
     })
   );
-  textParticles.push(
+  /* textParticles.push(
     //new Force( width / 2, height / 2+30, canvasSizeMultiplier * 500 ) // Add a force at the center of the canvas
     new Force({
       x: width / 2,
@@ -75,8 +89,21 @@ function setup() {
       strength: canvasSizeMultiplier * 500,
       doColision: true,
     })
-  )
+  ) */
 }
+
+
+function mousePressed() {
+  textParticles.push(
+    new Force({
+      x: mouseX,
+      y: mouseY,
+      strength: canvasSizeMultiplier * 200,
+      doColision: true,
+    })
+  );
+}
+
 
 function draw() {
   background(0);
@@ -130,7 +157,7 @@ function draw() {
     }
   }
 
-  displayDebugInfo(); // Display debug information
+  //displayDebugInfo(); // Display debug information
   debugCommands(); // Handle debug commands
 }
 

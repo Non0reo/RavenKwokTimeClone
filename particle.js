@@ -1,32 +1,38 @@
 class TextParticle {
-  constructor(options) {
+  constructor(options = {}) {
     console.log("TextParticle created with options:", options);
 
-    this.options = options || {};
-    this.text = this.options.text || ""; // Default to empty string if no text is provided
-    this.position = createVector(this.options.x || 0, this.options.y || 0);
-    this.isStatic = this.options.isStatic || false; // If true, the particle will not move
-    this.tag = this.options.tag || ""; // Optional tag for the particle
-    this.doColision = this.options.doColision !== undefined ? this.options.doColision : true; // Default to true if not specified
-    this.textSizeAdded = this.options.textSizeAdded || 0; // Additional collision force, default to 0
+    // Options and configuration
+    this.options = options;
+    this.text = options.text || "";
+    this.tag = options.tag || "";
+    this.doDrawTextPath = !!options.doDrawTextPath;
+    this.doColision = options.doColision !== undefined ? options.doColision : true;
+    this.isStatic = !!options.isStatic;
+    this.textSizeAdded = options.textSizeAdded || 0;
 
-    const sizeIn = this.options.size || 0; // Default size if not provided
-
-    this.defaultSize = sizeIn;
-    this.addedSize = 100;
-    this.size = sizeIn;
-
-    
+    // Position and movement
+    this.position = createVector(options.x || 0, options.y || 0);
     this.velocity = createVector(0, 0);
 
-    const randomColor = color(random(colors));
-    this.defaultColor = randomColor;
+    // Size
+    this.defaultSize = options.size || 0;
+    this.addedSize = 100;
+    this.size = this.defaultSize;
 
+    // Colors
+    const baseColor = color(random(colors));
+    this.defaultColor = baseColor;
     this.brightColor = color(
-      min(red(randomColor) + 100, 255),
-      min(green(randomColor) + 100, 255),
-      min(blue(randomColor) + 100, 255)
+      min(red(baseColor) + 100, 255),
+      min(green(baseColor) + 100, 255),
+      min(blue(baseColor) + 100, 255)
     );
+
+    // Text path (if enabled)
+    if (this.doDrawTextPath) {
+      this.textPath = font.getPath(this.text, 0, 0, this.defaultSize || 100);
+    }
   }
 
   repulsion(point) {
@@ -55,7 +61,7 @@ class TextParticle {
     }
 
     // Apply velocity to positionition
-    //this.velocity.limit(5); // Limit the velocity to prevent excessive speed
+    this.velocity.limit(2); // Limit the velocity to prevent excessive speed
 
     // Use a fixed decay factor for addedSize to avoid unnecessary calculations and reduce lag
     if (abs(this.addedSize) > 0.1) {
@@ -80,12 +86,60 @@ class TextParticle {
 
   }
 
+
+
   display() {
     
     this.isStatic ? fill(255) : fill(lerpColor(this.defaultColor, this.brightColor, this.addedSize / 100));
-    textSize(this.size + this.textSizeAdded);
     textAlign(CENTER, CENTER);
+
+    if (this.hasStroke) {
+      fill(0);
+      textSize(this.size * 1.5 + this.textSizeAdded);
+      text(this.text, this.position.x, this.position.y - this.size * 1.5 / 8);
+      fill(255);
+    }
+
+    textSize(this.size + this.textSizeAdded);
     text(this.text, this.position.x, this.position.y - this.size / 8);
+
+    push();
+    //translate(-114, 180);
+    //scale(0.5); // Scale down the text path for better visibility
+
+    //draw a circle at each path point if doDrawTextPath is true
+    if (this.doDrawTextPath) {
+      beginShape();
+      this.textPath.commands.forEach(cmd => {
+      if (cmd.type === 'M') {
+        // Move to (start new shape)
+        vertex(cmd.x + this.position.x, cmd.y + this.position.y);
+      } else if (cmd.type === 'L') {
+        // Line to
+        vertex(cmd.x + this.position.x, cmd.y + this.position.y);
+      } else if (cmd.type === 'C') {
+        // Bezier curve
+        bezierVertex(
+        cmd.x1 + this.position.x, cmd.y1 + this.position.y,
+        cmd.x2 + this.position.x, cmd.y2 + this.position.y,
+        cmd.x + this.position.x, cmd.y + this.position.y
+        );
+      } else if (cmd.type === 'Q') {
+        // Quadratic curve
+        quadraticVertex(
+        cmd.x1 + this.position.x, cmd.y1 + this.position.y,
+        cmd.x + this.position.x, cmd.y + this.position.y
+        );
+      } else if (cmd.type === 'Z') {
+        // Close shape
+        endShape(CLOSE);
+        beginShape();
+      }
+      });
+      endShape();
+    } 
+
+    pop();
   }
 
   debugDisplay() {
@@ -99,6 +153,8 @@ class TextParticle {
     noStroke();
     fill(255, 0, 0);
     circle(this.position.x, this.position.y, 5); // Draw a small circle at the particle's positionition
+
+
   }
   
 }
@@ -123,6 +179,10 @@ class Force {
 
   update() {
     // No update logic needed for static force
+  }
+
+  drawTextPath() {
+    // No text path for force, but can be implemented if needed
   }
 
   display() {

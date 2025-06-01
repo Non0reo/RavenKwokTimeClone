@@ -34,6 +34,14 @@ function debugCommands() {
             case 's':
                 minuteEvent(); // Trigger minute event on 'q' key press
                 break;
+            case 'd':
+                //display the force cicle for all Force objects in the textParticles array
+                for (const particle of textParticles) {
+                    if (particle instanceof Force) {
+                        particle.debugDisplay();
+                    }
+                }
+                
         }
     }
 }
