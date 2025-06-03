@@ -2,13 +2,15 @@ p5.disableFriendlyErrors = true;
 
 const canvasSizeMultiplier = 1; // Multiplier for canvas size
 const colors = ['#03fcd3', '#f279e4', '#f2ea79', '#ac79f2', '#ff5996'];
-const defaultParticleSize = canvasSizeMultiplier * 120; // Default size for new particles
-const oobKill = {
-  width: defaultParticleSize / 2 - 250,
-  height: defaultParticleSize / 2
-}
+const defaultParticleSize = canvasSizeMultiplier * 130; // Default size for new particles
 
-let repulsionDistMult = 1.3;
+let oobKill = {
+  top: 0,
+  bottom: defaultParticleSize / 2,
+  left: 200,
+  right: -200,
+}
+let repulsionDistMult = 1.0;
 let debugMode = false; // Debug mode flag
 
 let textParticles = [];
@@ -48,10 +50,10 @@ function setup() {
 
   //shader0 = loadShader('../shaders/shader.vert', '../shaders/shader.frag');
   shader1 = createFilterShader(contentShader1.join('\n')); 
-  shader1.setUniform('glow_size', 2);
-  shader1.setUniform('glow_colour', [ 0, 1, 0 ]);
-  shader1.setUniform('glow_intensity', 0.9);
-  shader1.setUniform('glow_threshold', 0.5);
+  shader1.setUniform('glow_size', 1);
+  shader1.setUniform('glow_colour', [ 1, 1, 1 ]);
+  shader1.setUniform('glow_intensity', 0.5);
+  shader1.setUniform('glow_threshold', 0.3);
 
   
     
@@ -81,7 +83,7 @@ function setup() {
   textSize(this.size);
   textAlign(CENTER, CENTER);
 
-  textParticles.push(
+  /* textParticles.push(
     new TextParticle({
       text: "•",
       x: width / 2,
@@ -92,14 +94,30 @@ function setup() {
       doColision: false,
       doDrawTextPath: false,
     })
+  ); */
+
+  //setTextParticleCount(700, textParticles.find((element) => element.tag == "main").text);
+  setTextParticleCount(700);
+
+  textParticles.push(
+    new TextParticle({
+      text: "01:10:01",
+      x: width / 2,
+      y: 350,
+      size: 800,
+      isStatic: true,
+      tag: "time",
+      doColision: false,
+      doDrawTextPath: false,
+      color: "#000000"
+    })
   );
 
-  setTextParticleCount(450);
+  
 
 
 
   const circleForceCount = 5;
-  const numChars = textParticles.find((element) => element.tag == "main").text.length;
 
   for (let j = 0; j < circleForceCount; j++) {
     forces.push(
@@ -162,6 +180,14 @@ function draw() {
     }
   }
 
+  //add velocity using mouse mouvement only for the near particles
+  for (const particle of textParticles) {
+    if (dist(mouseX, mouseY, particle.position.x, particle.position.y) < particle.defaultSize * 2) {
+      particle.velocity.x += (mouseX - pmouseX) * 0.1; // Apply mouse movement to velocity
+      particle.velocity.y += (mouseY - pmouseY) * 0.1; // Apply mouse movement to velocity
+    }
+  }
+
   waves.forEach(wave => {
     wave.update(); // Update each wave
   });
@@ -204,8 +230,9 @@ function draw() {
   background(0);
   translate(-width/2, -height/2);
   
+  image(buffer1, 0, 0);
   image(buffer0, 0, 0);
-  //image(buffer1, 0, 0);
+  
 
 
   

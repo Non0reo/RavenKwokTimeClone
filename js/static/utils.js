@@ -78,8 +78,7 @@ function buildTextForces(spreadX = 1.0, spreadY = 0.16, size = 630) {
 
 
 
-function setTextParticleCount(count) {
-    const mainTextParticle = textParticles.find((element) => element.tag == "main");
+function setTextParticleCount(count, textIn = "•") {
 
     // Calculate the number of particles to add
     const particlesToAdd = count - textParticles.length;
@@ -88,7 +87,7 @@ function setTextParticleCount(count) {
         for (let i = 0; i < particlesToAdd; i++) {
             textParticles.push(
                 new TextParticle({
-                    text: mainTextParticle.text,
+                    text: textIn,
                     x: random(width),
                     y: random(height),
                     size: defaultParticleSize,

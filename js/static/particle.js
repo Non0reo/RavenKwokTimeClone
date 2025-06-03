@@ -22,7 +22,7 @@ class TextParticle extends PointForce {
     this.size = this.defaultSize;
 
     // Colors
-    this.setColor(color(random(colors)));
+    this.setColor(options.color === undefined ? color(random(colors)) : color(options.color));
 
     // Text path (if enabled)
     if (this.doDrawTextPath) {
@@ -90,11 +90,11 @@ class TextParticle extends PointForce {
 
     //prevent particles from going out of bounds without killing them
     if (
-      this.position.x < -oobKill.width || this.position.x > width + oobKill.width ||
-      this.position.y < -oobKill.height || this.position.y > height + oobKill.height
+      this.position.x < oobKill.left || this.position.x > width + oobKill.right ||
+      this.position.y < oobKill.top || this.position.y > height + oobKill.bottom
     ) {
-      this.position.x = constrain(this.position.x, -oobKill.width, width + oobKill.width);
-      this.position.y = constrain(this.position.y, -oobKill.height, height + oobKill.height);
+      this.position.x = constrain(this.position.x, oobKill.left, width + oobKill.right);
+      this.position.y = constrain(this.position.y, oobKill.top, height + oobKill.bottom);
     }
 
     // Apply velocity to positionition
