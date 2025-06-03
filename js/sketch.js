@@ -16,31 +16,46 @@ let forces = [];
 let waves = [];
 
 let canvas;
+let buffer0;
+let buffer1;
+
 let font;
 let fontData;
 let rawFont;
 let maskImage;
-let shaderContent
-let styleShader;
+
+let contentShader0;
+let shader0;
+let contentShader1;
+let shader1;
 
 function preload() {
   fontData = loadBytes('assets/font/barlow-1.422/ttf/BarlowCondensed-Bold.ttf');
   rawFont = loadFont('assets/font/barlow-1.422/ttf/BarlowCondensed-Bold.ttf');
   maskImage = loadImage('assets/images/GlobalTransparent.png');
-  shaderContent = loadStrings('../shaders/glow.frag');
+  contentShader0 = loadStrings('../shaders/background.frag');
+  contentShader1 = loadStrings('../shaders/glow.frag');
+  
 }
 
 function setup() {
   //canvas = createCanvas(window.innerWidth * canvasSizeMultiplier, window.innerHeight * canvasSizeMultiplier, WEBGL);
   canvas = createCanvas(3600 * canvasSizeMultiplier, 3268 * canvasSizeMultiplier, WEBGL);
-  //styleShader = loadShader('../shaders/shader.vert', '../shaders/shader.frag'); // Load the shader
-  styleShader = createFilterShader(shaderContent.join('\n')); 
-  styleShader.setUniform('glow_size', 0.5);
-  styleShader.setUniform('glow_colour', [ 1, 1, 1 ]);
-  styleShader.setUniform('glow_intensity', 1);
-  styleShader.setUniform('glow_threshold', 0.5);
+  buffer0 = createFramebuffer();
+  buffer1 = createFramebuffer();
+
+  shader0 = createFilterShader(contentShader0.join('\n'));
+
+  //shader0 = loadShader('../shaders/shader.vert', '../shaders/shader.frag');
+  shader1 = createFilterShader(contentShader1.join('\n')); 
+  shader1.setUniform('glow_size', 2);
+  shader1.setUniform('glow_colour', [ 0, 1, 0 ]);
+  shader1.setUniform('glow_intensity', 0.9);
+  shader1.setUniform('glow_threshold', 0.5);
+
+  
     
-  // Responsive canvas sizing: fit to window while preserving aspect ratio
+
   function resizeCanvasToWindow() {
     const aspectRatio = width / height;
     const windowAspect = window.innerWidth / window.innerHeight;
@@ -59,16 +74,16 @@ function setup() {
   resizeCanvasToWindow();
   window.addEventListener('resize', resizeCanvasToWindow);
 
+
   font = opentype.parse(fontData.bytes.buffer);
   console.log("Font loaded:", font);
-
   textFont(rawFont);
   textSize(this.size);
   textAlign(CENTER, CENTER);
 
   textParticles.push(
     new TextParticle({
-      text: "9",
+      text: "•",
       x: width / 2,
       y: height * 2,
       size: defaultParticleSize * 18,
@@ -114,10 +129,12 @@ function setup() {
 
 
 function draw() {
+
+  buffer0.begin();
   background(0);
   translate(-width / 2, -height / 2);
 
-  //shader(styleShader);
+  //shader(shader0);
   
 
   //textParticles.find((element) => element.tag == "main").position.set(mouseX, mouseY); // Set the main text particle to follow the mouse position
@@ -149,7 +166,6 @@ function draw() {
     wave.update(); // Update each wave
   });
 
-
   // Make every particle repel from each other
   for (const particle1 of textParticles) {
     for (const particle2 of textParticles) {
@@ -177,8 +193,22 @@ function draw() {
   if (!debugMode) image(maskImage, 0, 0, width, height);
   else displayDebugInfo();
 
-  styleShader.setUniform('u_mouse', [mouseX, mouseY]);
-  filter(styleShader);
+  filter(shader0);
+  buffer0.end();
+
+  buffer1.begin();
+    shader1.setUniform('buffer0', buffer0);
+    filter(shader1);
+  buffer1.end();
+
+  background(0);
+  translate(-width/2, -height/2);
+  
+  image(buffer0, 0, 0);
+  //image(buffer1, 0, 0);
+
+
+  
 }
 
 

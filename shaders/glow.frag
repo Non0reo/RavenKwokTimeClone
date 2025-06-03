@@ -1,6 +1,7 @@
 precision highp float;
 
-uniform sampler2D tex0;
+uniform sampler2D tex0; // Last frame texture
+uniform sampler2D buffer0; // Particle buffer texture
 
 uniform float glow_size;
 uniform vec3 glow_colour;
@@ -11,29 +12,35 @@ uniform vec2 canvasSize;
 varying vec2 vTexCoord;
 
 void main() {
-    vec4 pixel = texture2D(tex0, vTexCoord);
-    if(pixel.rgb == vec3(0.0)) {
-        pixel.a = 1.; // Ensure fully transparent pixels are black
-    }
+    vec4 color = vec4(glow_colour, 0.0);
+    //vec4 color = vec4(0.0);
 
-    if (pixel.a <= glow_threshold) {
-        vec2 size = canvasSize;
-        vec2 uv = vTexCoord;
+    vec4 lastFrame = texture2D(tex0, vTexCoord);
+    vec4 particleFrame = texture2D(buffer0, vTexCoord);
 
-        float sum = 0.0;
-        for (int y = -4; y <= 4; ++y) {
-            for (int x = -4; x <= 4; ++x) {
-                vec2 offset = vec2(float(x), float(y)) * glow_size;
-                sum += texture2D(tex0, vTexCoord + offset).a;
-            }
+
+    float sum = 0.0;
+    int count = 0;
+    for(int dx = -4; dx <= 4; dx++) {
+        for(int dy = -4; dy <= 4; dy++) {
+            vec2 offset = vec2(float(dx), float(dy)) * glow_size / canvasSize;
+            sum += texture2D(tex0, vTexCoord + offset).a;
+            count++;
         }
-        sum /= 81.0;
+    }
+    sum /= float(count);
 
+    
 
-        pixel = vec4(glow_colour, (sum / 9.0) * glow_intensity);
-        //pixel = vec4(vTexCoord, 0., 1.);
+    color = vec4(color.xyz, sum * glow_intensity);
+    
+    if(particleFrame.a > 0.1) {
+        color = vec4(glow_colour, 1.0);
     }
 
-    gl_FragColor = pixel;
-    //gl_FragColor = vec4(vTexCoord, 0.0, 1.0); // Debug: output texture coordinates
+    if(color.a < 0.1) {
+        discard;
+    }
+    
+    gl_FragColor = color;
 }
