@@ -10,30 +10,18 @@ function displayDebugInfo() {
         fill(255);
         textSize(30);
         textAlign(LEFT, TOP); 
-        text(`Time: ${nf(hours, 2)}:${nf(minutes, 2)}:${nf(seconds, 2)}`, 10, 0);
+        //text(`Time: ${nf(hours, 2)}:${nf(minutes, 2)}:${nf(seconds, 2)}`, 10, 0);
         text(`Particles: ${textParticles.length}`, 10, 30);
         text(`(+ Forces: ${forces.length})`, 10, 60);
         text(`FPS: ${frameRate().toFixed(2)}`, 10, 90);
     pop();
 }
 
-/*   if (key === ' ') {
-    textParticles = []; // Clear particles on spacebar press
-  }
-  if( key === 'a') timeChanged(seconds); // Trigger time change on 'a' key press
-  if (key === 'q') minuteEvent(); // Trigger minute event on 's' key press */
-
 function debugCommands() {
     if(keyIsPressed) {
         switch (key) {
             case ' ':
                 textParticles = []; // Clear particles on spacebar press
-                break;
-            case 'z':
-                timeChanged(seconds); // Trigger time change on 'a' key press
-                break;
-            case 's':
-                minuteEvent(); // Trigger minute event on 'q' key press
                 break;
             case 'd':
                 //display the force cicle for all Force objects in the textParticles array
@@ -50,6 +38,8 @@ function debugCommands() {
                     line(0, -height / 2, 0, height / 2); // Vertical line
                     line(-width / 2, 0, width / 2, 0); // Horizontal line
                 pop();
+                
+                debugMode = true;
             
                 break;
 
@@ -58,10 +48,11 @@ function debugCommands() {
                 break;
         }
     }
+    else debugMode = false; // Reset debug mode when no key is pressed
 }
 
 
-function buildTextForces() {
+function buildTextForces(spreadX = 1.0, spreadY = 0.16, size = 630) {
     forces.filter((force) => force.tag === 'text').forEach((force) => force.remove()); // Remove existing text forces
     
     const mainTextParticle = textParticles.find((element) => element.tag == "main");
@@ -74,9 +65,9 @@ function buildTextForces() {
         for (let j = 0; j < circleForceCount; j++) {
             forces.push(
                 new PointForce({
-                    x: mainTextParticle.position.x + (i + 0.5 - numChars) * (defaultParticleSize * numChars / 2), // Evenly distribute forces horizontally based on character index
-                    y: lerp( mainTextParticle.position.y - mainTextParticle.defaultSize / 6, mainTextParticle.position.y + mainTextParticle.defaultSize / 6, j / (circleForceCount - 1)), // Evenly distribute forces vertically
-                    strength: canvasSizeMultiplier * 630,
+                    x: mainTextParticle.position.x + (i + 0.5 - numChars) * (defaultParticleSize * numChars / 2 * spreadX), // Evenly distribute forces horizontally based on character index
+                    y: lerp( mainTextParticle.position.y - mainTextParticle.defaultSize * spreadY, mainTextParticle.position.y + mainTextParticle.defaultSize * spreadY, j / (circleForceCount - 1)), // Evenly distribute forces vertically
+                    strength: canvasSizeMultiplier * size,
                     doColision: true,
                     tag: 'text'
                 })

@@ -114,6 +114,8 @@ function startCountdown() {
     countdownNumber = 10; // Reset countdown number
     repulsionDistMult = 1.3; // Reset repulsion distance multiplier
     setTextParticleCount(450);
+    forces.filter((force) => force.tag === 'text').forEach((force) => force.remove()); // Remove existing text forces
+
     Object.assign(
         textParticles.find((element) => element.tag == "main"),
         {
@@ -141,7 +143,7 @@ function startCountdown() {
                     position: createVector(
                         //width / 2 + (countdownNumber % 2 * width * numberPosition * 2 - width * numberPosition), // Offset the text particle horizontally based on the countdown number
                         width / 2 + (width * numberPosition * (countdownNumber % 2 ? 1 : -1)), // Offset the text particle horizontally based on the countdown number
-                        3/4 * height
+                        height / 3+400
                     ), // Center the text particle
                 }
             );
@@ -159,7 +161,7 @@ function startCountdown() {
             clearInterval(interval); // Stop the countdown when it reaches zero
             countdownNumber = 2026;
             repulsionDistMult = 1.6;
-             setTextParticleCount(400);
+            setTextParticleCount(400);
             
             Object.assign(
                 textParticles.find((element) => element.tag == "main"),
@@ -180,7 +182,7 @@ function startCountdown() {
                 text: countdownNumber.toString(),
                 size: defaultParticleSize * 1,
             }));
-            buildTextForces();
+            buildTextForces(1.1, 0.08, 580);
         }
     }, 1500); // Update every second
 }
