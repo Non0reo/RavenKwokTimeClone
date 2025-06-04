@@ -11,7 +11,9 @@ let oobKill = {
   right: -200,
 }
 let repulsionDistMult = 1.1;
-let debugMode = false; // Debug mode flag
+let debugMode = false; // Debug mode flag.
+let remaningSeconds = 100; // Remaining seconds for timer
+let temp_seconds, seconds;
 
 let textParticles = [];
 let forces = [];
@@ -20,6 +22,7 @@ let waves = [];
 let canvas;
 let buffer0;
 let buffer1;
+let buffer2;
 
 let font;
 let fontData;
@@ -45,6 +48,7 @@ function setup() {
   canvas = createCanvas(3600 * canvasSizeMultiplier, 3268 * canvasSizeMultiplier, WEBGL);
   buffer0 = createFramebuffer();
   buffer1 = createFramebuffer();
+  buffer2 = createFramebuffer();
 
   shader0 = createFilterShader(contentShader0.join('\n'));
 
@@ -115,7 +119,7 @@ function setup() {
   // setTextParticleCount(700, "9");
   // repulsionDistMult = 3;
 
-  /* textParticles.push(
+  textParticles.push(
     new TextParticle({
       text: "01:10:01",
       x: width / 2,
@@ -125,9 +129,9 @@ function setup() {
       tag: "time",
       doColision: false,
       doDrawTextPath: false,
-      color: "#000000"
+      color: "#010101"
     })
-  ); */
+  );
 
   buildTextForces();
 }
@@ -153,6 +157,19 @@ function draw() {
       particle.defaultSize = map(mouseY, 0, height, defaultParticleSize * 0, defaultParticleSize * 2);
     }
   }); */
+  
+  const now = new Date();
+  seconds = now.getSeconds();
+
+  if (temp_seconds !== seconds) {
+    remaningSeconds--;
+    //remaningSeconds to a XX:XX format
+    const formatedTime = `${String(Math.floor((remaningSeconds % 3600) / 60)).padStart(2, '0')}:${String(remaningSeconds % 60).padStart(2, '0')}`;
+    const particle = textParticles.find((element) => element.tag == "time")
+    particle.text = formatedTime; // Update the time text particle
+    particle.addedSize = 50; // Reset the added size to create a pulsing effect
+    temp_seconds = seconds;
+  }
 
   buffer0.begin();
   background(0);
@@ -229,15 +246,24 @@ function draw() {
   buffer0.end();
 
   buffer1.begin();
-    shader1.setUniform('buffer0', buffer0);
-    filter(shader1);
+
   buffer1.end();
+
+
+
+  buffer2.begin();
+    shader1.setUniform('buffer0', buffer0);
+    shader1.setUniform('buffer1', buffer1);
+    filter(shader1);
+  buffer2.end();
 
   background(0);
   translate(-width/2, -height/2);
   
-  //image(buffer1, 0, 0);
+  image(buffer2, 0, 0);
+
   image(buffer0, 0, 0);
+  //image(buffer, 0, 0);
   
 
 
