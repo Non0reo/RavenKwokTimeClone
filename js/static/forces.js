@@ -2,10 +2,10 @@
 class Force {
     constructor(options) {
         this.options = options || {};
-        this.position = createVector(this.options.x || 0, this.options.y || 0);
-        this.isStatic = true; // Static force, does not move
-        this.tag = this.options.tag || ""; // Tag for identification
-        this.doColision = this.options.doColision;
+        this.position = createVector(options.x || 0, options.y || 0);
+        this.isStatic = true;
+        this.tag = options.tag || "";
+        this.doColision = options.doColision ?? true;
     }
 
     repulsion(point) { }
@@ -15,35 +15,6 @@ class Force {
     display() { }
 
     debugDisplay() { }
-}
-
-
-class PointForce extends Force {
-    constructor(options) {
-        super(options);
-        this.defaultSize = this.options.strength || 0;
-        this.size = this.defaultSize;
-
-        console.log("Force created at", this.position.x, this.position.y, "with strength", this.size);
-    }
-    debugDisplay() {
-        fill(255, 0, 0, 130); // Semi-transparent color for debugging
-        circle(this.position.x, this.position.y, this.size * repulsionDistMult); // Debugging circle
-    }
-
-    applyForce(point) {
-        if (!this.doColision || !point.doColision) return; // Skip if not colliding or static
-
-        let pointDistance = dist(this.position.x, this.position.y, point.position.x, point.position.y);
-        let pointAngle = atan2(this.position.y - point.position.y, this.position.x - point.position.x);
-
-        // Use the force's size for collision/repulsion distance
-        let repulsionRadius = this.size;
-        let pointF = constrain(map(pointDistance, 0, repulsionRadius, 10, 0), 0, 2);
-
-        point.velocity.x -= pointF * cos(pointAngle);
-        point.velocity.y -= pointF * sin(pointAngle);
-    }
 
     remove() {
         // Remove this force from the forces array
@@ -52,6 +23,37 @@ class PointForce extends Force {
             forces.splice(index, 1);
             console.log("Force removed at", this.position.x, this.position.y);
         }
+    }
+}
+
+
+class PointForce extends Force {
+    constructor(options) {
+        super(options);
+        this.defaultSize = this.options.size || 0;
+        this.size = this.defaultSize;
+        this.strength = this.options.strength || -1;
+
+        console.log("Force created at", this.position.x, this.position.y, "with size", this.size);
+    }
+    debugDisplay() {
+        if (!this.doColision) return;
+        fill(255, 0, 0, 130);
+        circle(this.position.x, this.position.y, this.size * repulsionDistMult);
+    }
+
+    applyForce(point) {
+        if (!this.doColision || !point.doColision) return;
+
+        let pointDistance = dist(this.position.x, this.position.y, point.position.x, point.position.y);
+        let pointAngle = atan2(this.position.y - point.position.y, this.position.x - point.position.x);
+
+        // Use the force's size for collision/repulsion distance
+        let repulsionRadius = this.size;
+        let pointF = constrain(map(pointDistance, 0, repulsionRadius, 10, 0), 0, 2);
+
+        point.velocity.x += pointF * cos(pointAngle) * this.strength;
+        point.velocity.y += pointF * sin(pointAngle) * this.strength;
     }
 }
 

@@ -10,7 +10,7 @@ let oobKill = {
   left: 200,
   right: -200,
 }
-let repulsionDistMult = 1.0;
+let repulsionDistMult = 1.1;
 let debugMode = false; // Debug mode flag
 
 let textParticles = [];
@@ -83,23 +83,39 @@ function setup() {
   textSize(this.size);
   textAlign(CENTER, CENTER);
 
-  /* textParticles.push(
+
+
+  const circleForceCount = 5;
+
+  for (let j = 0; j < circleForceCount; j++) {
+    forces.push(
+      new PointForce({
+        x: width / 2,
+        y: lerp(height/2 + 200, height, j / (circleForceCount - 1)), // Evenly distribute forces vertically
+        size: canvasSizeMultiplier * 600,
+      })
+    );
+  }
+
+  textParticles.push(
     new TextParticle({
       text: "•",
       x: width / 2,
       y: height * 2,
       size: defaultParticleSize * 18,
       isStatic: true,
-      tag: "main",
       doColision: false,
+      tag: "main",
       doDrawTextPath: false,
     })
-  ); */
+  );
 
   //setTextParticleCount(700, textParticles.find((element) => element.tag == "main").text);
-  setTextParticleCount(700);
+  setTextParticleCount(450);
+  // setTextParticleCount(700, "9");
+  // repulsionDistMult = 3;
 
-  textParticles.push(
+  /* textParticles.push(
     new TextParticle({
       text: "01:10:01",
       x: width / 2,
@@ -111,26 +127,9 @@ function setup() {
       doDrawTextPath: false,
       color: "#000000"
     })
-  );
+  ); */
 
-  
-
-
-
-  const circleForceCount = 5;
-
-  for (let j = 0; j < circleForceCount; j++) {
-    forces.push(
-      new PointForce({
-        x: width / 2,
-        y: lerp(height/2 + 200, height, j / (circleForceCount - 1)), // Evenly distribute forces vertically
-        strength: canvasSizeMultiplier * 600,
-        doColision: true,
-      })
-    );
-  }
-
-  //buildTextForces();
+  buildTextForces();
 }
 
 
@@ -139,14 +138,21 @@ function setup() {
     new PointForce({
       x: mouseX,
       y: mouseY,
-      strength: canvasSizeMultiplier * 800,
+      size: defaultParticleSize * 1,
       doColision: true,
+      strength: 1,
     })
   );
 } */
 
 
 function draw() {
+  /* repulsionDistMult = map(mouseX, 0, width, 0.5, 4); // Adjust repulsion distance multiplier based on mouse X position
+  textParticles.forEach((particle) => {
+    if (particle.tag !== "main") {
+      particle.defaultSize = map(mouseY, 0, height, defaultParticleSize * 0, defaultParticleSize * 2);
+    }
+  }); */
 
   buffer0.begin();
   background(0);
@@ -230,7 +236,7 @@ function draw() {
   background(0);
   translate(-width/2, -height/2);
   
-  image(buffer1, 0, 0);
+  //image(buffer1, 0, 0);
   image(buffer0, 0, 0);
   
 

@@ -44,7 +44,11 @@ function debugCommands() {
                 break;
 
             case 'f':
-                image(maskImage, 0, 0, width, height);
+                for (const particle of textParticles) {
+                    if (particle instanceof TextParticle) {
+                        particle.debugDisplay();
+                    }
+                }
                 break;
         }
     }
@@ -67,13 +71,22 @@ function buildTextForces(spreadX = 1.0, spreadY = 0.16, size = 630) {
                 new PointForce({
                     x: mainTextParticle.position.x + (i + 0.5 - numChars) * (defaultParticleSize * numChars / 2 * spreadX), // Evenly distribute forces horizontally based on character index
                     y: lerp( mainTextParticle.position.y - mainTextParticle.defaultSize * spreadY, mainTextParticle.position.y + mainTextParticle.defaultSize * spreadY, j / (circleForceCount - 1)), // Evenly distribute forces vertically
-                    strength: canvasSizeMultiplier * size,
-                    doColision: true,
+                    size: canvasSizeMultiplier * size,
                     tag: 'text'
                 })
             );
         }
     }
+    /* forces.push(
+        new RectangleForce({
+            x: mainTextParticle.position.x,
+            y: mainTextParticle.position.y ,
+            width: mainTextParticle.defaultSize * numChars * 0.5,
+            height: mainTextParticle.defaultSize * 1.2,//* 0.7,
+            tag: 'text',
+            fromCenter: true
+        })
+    ) */
 }
 
 
@@ -88,19 +101,29 @@ function setTextParticleCount(count, textIn = "•") {
             textParticles.push(
                 new TextParticle({
                     text: textIn,
-                    x: random(width),
-                    y: random(height),
+                    x: width / 2 + random(-10,10),
+                    y: height / 2 + random(-10,10),
+                    // x: random(width),
+                    // y: random(height),
                     size: defaultParticleSize,
+                    //size: random(defaultParticleSize * 0.5, defaultParticleSize * 0.4),
                 })
             );
         }
     } else if (particlesToAdd < 0) {
         // Remove only particles with no tags until the desired count is reached
         let toRemove = Math.abs(particlesToAdd);
-        for (let i = textParticles.length - 1; i >= 0 && toRemove > 0; i--) {
-            if (!textParticles[i].tag) {
-                textParticles.splice(i, 1);
-                toRemove--;
+        // Sort particles without tags by their y position (bottommost first)
+        let removable = textParticles
+            .map((p, i) => ({ p, i }))
+            .filter(obj => !obj.p.tag)
+            .sort((a, b) => b.p.position.y - a.p.position.y);
+
+        for (let j = 0; j < toRemove && j < removable.length; j++) {
+            textParticles.splice(removable[j].i, 1);
+            // Adjust indices of remaining items since splice mutates the array
+            for (let k = j + 1; k < removable.length; k++) {
+            if (removable[k].i > removable[j].i) removable[k].i--;
             }
         }
     }

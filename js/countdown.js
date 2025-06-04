@@ -115,6 +115,14 @@ function startCountdown() {
     repulsionDistMult = 1.3; // Reset repulsion distance multiplier
     setTextParticleCount(450);
     forces.filter((force) => force.tag === 'text').forEach((force) => force.remove()); // Remove existing text forces
+    
+    textParticles.forEach((particle) => {
+        if (particle.tag !== "main") {
+            particle.text = "•"; // Reset text to a dot
+        } else {
+            particle.position = createVector(width / 2, height / 3 + 400); // Center the main text particle
+        }
+    });
 
     Object.assign(
         textParticles.find((element) => element.tag == "main"),

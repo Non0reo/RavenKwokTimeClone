@@ -9,7 +9,6 @@ class TextParticle extends PointForce {
     this.text = options.text || "";
     this.tag = options.tag || "";
     this.doDrawTextPath = !!options.doDrawTextPath;
-    this.doColision = options.doColision !== undefined ? options.doColision : true;
     this.isStatic = !!options.isStatic;
 
     // Position and movement
