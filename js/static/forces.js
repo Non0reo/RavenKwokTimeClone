@@ -3,7 +3,6 @@ class Force {
     constructor(options) {
         this.options = options || {};
         this.position = createVector(options.x || 0, options.y || 0);
-        this.isStatic = true;
         this.tag = options.tag || "";
         this.doColision = options.doColision ?? true;
     }
@@ -34,7 +33,7 @@ class PointForce extends Force {
         this.size = this.defaultSize;
         this.strength = this.options.strength || -1;
 
-        console.log("Force created at", this.position.x, this.position.y, "with size", this.size);
+        //console.log("Force created at", this.position.x, this.position.y, "with size", this.size);
     }
     debugDisplay() {
         if (!this.doColision) return;
@@ -49,9 +48,10 @@ class PointForce extends Force {
         let pointAngle = atan2(this.position.y - point.position.y, this.position.x - point.position.x);
 
         // Use the force's size for collision/repulsion distance
-        let repulsionRadius = this.size;
+        let repulsionRadius = this.size * repulsionDistMult;
         let pointF = constrain(map(pointDistance, 0, repulsionRadius, 10, 0), 0, 2);
 
+        // Repulsion/attraction force
         point.velocity.x += pointF * cos(pointAngle) * this.strength;
         point.velocity.y += pointF * sin(pointAngle) * this.strength;
     }
@@ -71,7 +71,7 @@ class RectangleForce extends Force {
         this.fromCenter = fromCenter; // Whether the rectangle is defined from its center
         this.area = createVector(options.width || 0, options.height || 0);
 
-        console.log("RectangleForce created at", this.position.x, this.position.y, "with size", this.area.x, this.area.y);
+        //console.log("RectangleForce created at", this.position.x, this.position.y, "with size", this.area.x, this.area.y);
     }
 
     debugDisplay() {

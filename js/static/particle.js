@@ -2,7 +2,7 @@ class TextParticle extends PointForce {
   constructor(options = {}) {
     super(options);
 
-    console.log("TextParticle created with options:", options);
+    //console.log("TextParticle created with options:", options);
 
     // Options and configuration
     this.options = options;
@@ -13,6 +13,7 @@ class TextParticle extends PointForce {
 
     // Position and movement
     this.position = createVector(options.x || 0, options.y || 0);
+    this.desiredPosition = createVector(options.xDesired || 0, options.yDesired || 0);
     this.velocity = createVector(0, 0);
 
     // Size

@@ -56,6 +56,9 @@ function debugCommands() {
 }
 
 
+
+
+
 function buildTextForces(spreadX = 1.0, spreadY = 0.16, size = 630) {
     forces.filter((force) => force.tag === 'text').forEach((force) => force.remove()); // Remove existing text forces
     
@@ -106,7 +109,7 @@ function setTextParticleCount(count, textIn = "•") {
                     // x: random(width),
                     // y: random(height),
                     size: defaultParticleSize,
-                    //size: random(defaultParticleSize * 0.5, defaultParticleSize * 0.4),
+                    //size: random(defaultParticleSize * 0.5, defaultParticleSize * 1),
                 })
             );
         }

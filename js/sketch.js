@@ -1,7 +1,8 @@
 p5.disableFriendlyErrors = true;
 
 const canvasSizeMultiplier = 1; // Multiplier for canvas size
-const colors = ['#03fcd3', '#f279e4', '#f2ea79', '#ac79f2', '#ff5996'];
+//const colors = ['#03fcd3', '#f279e4', '#f2ea79', '#ac79f2', '#ff5996'];
+const colors = ['#f29538', '#edd42d', '#fc7419', '#ffff8c'];
 const defaultParticleSize = canvasSizeMultiplier * 130; // Default size for new particles
 
 let oobKill = {
@@ -10,7 +11,7 @@ let oobKill = {
   left: 200,
   right: -200,
 }
-let repulsionDistMult = 1.1;
+let repulsionDistMult = 1.3;
 let debugMode = false; // Debug mode flag.
 let remaningSeconds = 100; // Remaining seconds for timer
 let temp_seconds, seconds;
@@ -29,17 +30,28 @@ let fontData;
 let rawFont;
 let maskImage;
 
-let contentShader0;
-let shader0;
-let contentShader1;
-let shader1;
+/* let contentShader0, contentShader1, contentShader2;
+let shader0, shader1, shader2; */
+
+let shaderNames = ['background', 'glow', 'sobel'];
+let shaders = [];
 
 function preload() {
   fontData = loadBytes('assets/font/barlow-1.422/ttf/BarlowCondensed-Bold.ttf');
   rawFont = loadFont('assets/font/barlow-1.422/ttf/BarlowCondensed-Bold.ttf');
   maskImage = loadImage('assets/images/GlobalTransparent.png');
-  contentShader0 = loadStrings('../shaders/background.frag');
-  contentShader1 = loadStrings('../shaders/glow.frag');
+
+  for (let i = 0; i < shaderNames.length; i++) {
+    shaders.push({
+      name: shaderNames[i],
+      content: loadStrings(`../shaders/${shaderNames[i]}.frag`),
+      s: null,
+      filter: () => {
+        filter(getShader(i));
+      },
+      
+    });
+  }
   
 }
 
@@ -50,14 +62,17 @@ function setup() {
   buffer1 = createFramebuffer();
   buffer2 = createFramebuffer();
 
-  shader0 = createFilterShader(contentShader0.join('\n'));
+  /* for (let i = 0; i < shaders.length; i++) {
+    shaders[i].s = createFilterShader( shaders[i].content.join('\n'));
+  }
 
   //shader0 = loadShader('../shaders/shader.vert', '../shaders/shader.frag');
-  shader1 = createFilterShader(contentShader1.join('\n')); 
-  shader1.setUniform('glow_size', 1);
-  shader1.setUniform('glow_colour', [ 1, 1, 1 ]);
-  shader1.setUniform('glow_intensity', 0.5);
-  shader1.setUniform('glow_threshold', 0.3);
+  
+  
+  shaders[1].s.setUniform('glow_size', 1);
+  shaders[1].setUniform('glow_colour', [ 1, 1, 1 ]);
+  shaders[1].setUniform('glow_intensity', 0.5);
+  shaders[1].setUniform('glow_threshold', 0.3); */
 
   
     
@@ -137,17 +152,16 @@ function setup() {
 }
 
 
-/* function mousePressed() {
+function mousePressed() {
   forces.push(
     new PointForce({
       x: mouseX,
       y: mouseY,
-      size: defaultParticleSize * 1,
+      size: defaultParticleSize * 3,
       doColision: true,
-      strength: 1,
     })
   );
-} */
+}
 
 
 function draw() {
@@ -220,53 +234,49 @@ function draw() {
     for (const particle2 of textParticles) {
       if (particle1 !== particle2) {
         if (dist(particle1.position.x, particle1.position.y, particle2.position.x, particle2.position.y) < particle2.defaultSize * repulsionDistMult) {
-          particle1.repulsion(particle2);
+          particle1.applyForce(particle2);
         }
       }
     }
     particle1.update();
-    //if(particle1.tag !== 'main') particle1.display();
-    particle1.display();
+    if(particle1.tag !== 'time') particle1.display();
+    //particle1.display();
     //particle1.debugDisplay();
   }
-
-  // Display all particles
-  // for (const particle of textParticles) {
-  //   particle.update();
-  //   particle.display();
-  // }
-
 
   debugCommands(); // Handle debug commands
 
   if (!debugMode) image(maskImage, 0, 0, width, height);
   else displayDebugInfo();
 
-  filter(shader0);
+  //filter(shaders[0]);
   buffer0.end();
 
-  buffer1.begin();
 
+
+  buffer1.begin();
+    background(0);
+    translate(-width / 2, -height / 2);
+    textParticles.find((element) => element.tag == "time").display();
+    //filter(shader0);
+    //filter(shader1);
+    //filter(shaders[2]);
   buffer1.end();
 
 
-
   buffer2.begin();
-    shader1.setUniform('buffer0', buffer0);
-    shader1.setUniform('buffer1', buffer1);
-    filter(shader1);
+    //getShader('glow').setUniform('buffer0', buffer0);
+    //getShader('glow').setUniform('buffer1', buffer1);
+    //filter(getShader('sobel'));
   buffer2.end();
+
 
   background(0);
   translate(-width/2, -height/2);
   
   image(buffer2, 0, 0);
-
+  image(buffer1, 0, 0);
   image(buffer0, 0, 0);
-  //image(buffer, 0, 0);
-  
-
-
   
 }
 
