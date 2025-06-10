@@ -23,7 +23,7 @@ function debugCommands() {
             case ' ':
                 textParticles = []; // Clear particles on spacebar press
                 break;
-            case 'd':
+            /* case 'd':
                 //display the force cicle for all Force objects in the textParticles array
                 for (const force of forces) {
                     if (force instanceof Force) {
@@ -41,7 +41,7 @@ function debugCommands() {
                 
                 debugMode = true;
             
-                break;
+                break; */
 
             case 'f':
                 for (const particle of textParticles) {
@@ -52,7 +52,6 @@ function debugCommands() {
                 break;
         }
     }
-    else debugMode = false; // Reset debug mode when no key is pressed
 }
 
 
@@ -94,7 +93,7 @@ function buildTextForces(spreadX = 1.0, spreadY = 0.16, size = 630) {
 
 
 
-function setTextParticleCount(count, textIn = "•") {
+function setTextParticleCount(count, textIn = particleText) {
 
     // Calculate the number of particles to add
     const particlesToAdd = count - textParticles.length;
@@ -104,10 +103,10 @@ function setTextParticleCount(count, textIn = "•") {
             textParticles.push(
                 new TextParticle({
                     text: textIn,
-                    x: width / 2 + random(-10,10),
-                    y: height / 2 + random(-10,10),
-                    // x: random(width),
-                    // y: random(height),
+                    // x: width / 2 + random(-10,10),
+                    // y: height / 2 + random(-10,10),
+                    x: random(width),
+                    y: random(height),
                     size: defaultParticleSize,
                     //size: random(defaultParticleSize * 0.5, defaultParticleSize * 1),
                 })

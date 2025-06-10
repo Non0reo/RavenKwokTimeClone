@@ -78,55 +78,11 @@ function setup() {
 
 
 
-  const circleForceCount = 5;
-
-  for (let j = 0; j < circleForceCount; j++) {
-    forces.push(
-      new PointForce({
-        x: width / 2,
-        y: lerp(height/2 + 200, height, j / (circleForceCount - 1)), // Evenly distribute forces vertically
-        size: canvasSizeMultiplier * 600,
-      })
-    );
-  }
-
-  textParticles.push(
-    new TextParticle({
-      text: "•",
-      x: width / 2,
-      y: height * 2,
-      size: defaultParticleSize * 18,
-      isStatic: true,
-      doColision: false,
-      tag: "main",
-      doDrawTextPath: false,
-    })
-  );
-
-  //setTextParticleCount(700, textParticles.find((element) => element.tag == "main").text);
-  setTextParticleCount(450);
-  // setTextParticleCount(700, "9");
-  // repulsionDistMult = 3;
-
-  textParticles.push(
-    new TextParticle({
-      text: "01:10:01",
-      x: width / 2,
-      y: 350,
-      size: 800,
-      isStatic: true,
-      tag: "time",
-      doColision: false,
-      doDrawTextPath: false,
-      color: "#010101"
-    })
-  );
-
-  buildTextForces();
+  setTextParticleCount(particleCount);
 }
 
 
-function mousePressed() {
+function doubleClicked() {
   forces.push(
     new PointForce({
       x: mouseX,
@@ -150,12 +106,6 @@ function draw() {
   seconds = now.getSeconds();
 
   if (temp_seconds !== seconds) {
-    remaningSeconds--;
-    //remaningSeconds to a XX:XX format
-    const formatedTime = `${String(Math.floor((remaningSeconds % 3600) / 60)).padStart(2, '0')}:${String(remaningSeconds % 60).padStart(2, '0')}`;
-    const particle = textParticles.find((element) => element.tag == "time")
-    particle.text = formatedTime; // Update the time text particle
-    particle.addedSize = 50; // Reset the added size to create a pulsing effect
     temp_seconds = seconds;
   }
 
@@ -192,12 +142,12 @@ function draw() {
   }
 
   //add velocity using mouse mouvement only for the near particles
-  for (const particle of textParticles) {
+  /* for (const particle of textParticles) {
     if (dist(mouseX, mouseY, particle.position.x, particle.position.y) < particle.defaultSize * 2) {
       particle.velocity.x += (mouseX - pmouseX) * 0.1; // Apply mouse movement to velocity
       particle.velocity.y += (mouseY - pmouseY) * 0.1; // Apply mouse movement to velocity
     }
-  }
+  } */
 
   waves.forEach(wave => {
     wave.update(); // Update each wave
@@ -212,16 +162,23 @@ function draw() {
         }
       }
     }
-    particle1.update();
-    if(particle1.tag !== 'time') particle1.display();
+    /* particle1.update();
+    particle1.display(); */
     //particle1.display();
     //particle1.debugDisplay();
   }
 
+
+  //display partifcles
+  for (const particle of textParticles) {
+    particle.update();
+    particle.display();
+    //particle.debugDisplay();
+  }
+
   debugCommands(); // Handle debug commands
 
-  if (!debugMode) image(maskImage, 0, 0, width, height);
-  else displayDebugInfo();
+  if (debugMode) displayDebugInfo();
 
   //filter(shaders[0]);
   buffer0.end();
@@ -231,7 +188,7 @@ function draw() {
   buffer1.begin();
     background(0);
     translate(-width / 2, -height / 2);
-    textParticles.find((element) => element.tag == "time").display();
+    //textParticles.find((element) => element.tag == "time").display();
     //filter(shader0);
     //filter(shader1);
     //filter(shaders[2]);

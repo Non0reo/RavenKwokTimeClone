@@ -1,13 +1,16 @@
 let canvasSizeMultiplier = 1; // Multiplier for canvas size
-//let colors = ['#03fcd3', '#f279e4', '#f2ea79', '#ac79f2', '#ff5996'];
 let colors = ['#f29538', '#edd42d', '#fc7419', '#ffff8c'];
-const defaultParticleSize = canvasSizeMultiplier * 130; // Default size for new particles
+let defaultParticleSize = canvasSizeMultiplier * 130; // Default size for new particles
+let friction = 0.2; // Friction applied to particles
+let particleCount = 450; // Number of particles to generate
+let particleText = "<3"; // Default text for particles
+let maxVelocity = 50; // Maximum velocity for particles
 
 let oobBorders = {
     top: 0,
-    bottom: defaultParticleSize / 2,
-    left: 200,
-    right: -200,
+    bottom: 0,
+    left: 0,
+    right: 0,
 }
 
 let dimensions = {
@@ -16,7 +19,7 @@ let dimensions = {
 };
 
 let repulsionDistMult = 1.3;
-let debugMode = false; // Debug mode flag.
+let debugMode = false;
 
 
 
@@ -27,10 +30,12 @@ let gui = new dat.GUI({
     hidable: true,
     width: 300
 });
+gui.useLocalStorage = true; // Enable local storage to save GUI state
 
 let canvasFolder = gui.addFolder('Canvas');
 let colorsFolder = gui.addFolder('Colors');
 let particleFolder = gui.addFolder('Particles');
+let otherFolder = gui.addFolder('Other');
 colorsFolder.open();
 
 /* CANVAS */
@@ -40,6 +45,7 @@ canvasFolder.add(dimensions, 'width').name('Canvas Width').onFinishChange((value
     resizeCanvas(value * canvasSizeMultiplier, dimensions.height * canvasSizeMultiplier);
     resizeCanvasToWindow();
 }).listen();
+
 canvasFolder.add(dimensions, 'height').name('Canvas Height').onFinishChange((value) => {
     dimensions.height = value;
     console.log('Canvas height changed to:', value);
@@ -47,22 +53,6 @@ canvasFolder.add(dimensions, 'height').name('Canvas Height').onFinishChange((val
     resizeCanvasToWindow();
 }).listen();
 canvasFolder.open();
-
-
-let oobBordersFolder = canvasFolder.addFolder('Out of Bounds Borders');
-oobBordersFolder.add(oobBorders, 'top', -dimensions.height, dimensions.height).name('Top Border').onFinishChange((value) => {
-    oobBorders.top = value;
-}).listen();
-oobBordersFolder.add(oobBorders, 'bottom', -dimensions.height, dimensions.height).name('Bottom Border').onFinishChange((value) => {
-    oobBorders.bottom = value;
-}).listen();
-oobBordersFolder.add(oobBorders, 'left', -dimensions.width, dimensions.width).name('Left Border').onFinishChange((value) => {
-    oobBorders.left = value;
-}).listen();
-oobBordersFolder.add(oobBorders, 'right', -dimensions.width, dimensions.width).name('Right Border').onFinishChange((value) => {
-    oobBorders.right = value;
-}).listen();
-
 
 canvasFolder.add({click: () => {
     dimensions.width = 3600;
@@ -72,14 +62,30 @@ canvasFolder.add({click: () => {
     console.log('Canvas size reset to default:', dimensions.width, 'x', dimensions.height);
 }}, 'click').name('Reset Canvas Size');
 
-
-let canvasSizeMultiplierFolder = canvasFolder.add({value: canvasSizeMultiplier}, 'value', 0.1, 2, 0.1).name('Canvas Size Multiplier').onFinishChange((value) => {
+canvasFolder.add({value: canvasSizeMultiplier}, 'value', 0.1, 2, 0.1).name('Canvas Size Multiplier').onFinishChange((value) => {
     // Update the canvas size multiplier and resize the canvas
     canvasSizeMultiplier = value;
     console.log('Canvas size multiplier changed to:', value);
     resizeCanvas(dimensions.width * canvasSizeMultiplier, dimensions.height * canvasSizeMultiplier);
     resizeCanvasToWindow();
 }).listen();
+
+
+// Out of Bounds Borders controls
+let oobBordersFolder = canvasFolder.addFolder('Out of Bounds Borders');
+const borderConfigs = [
+    { key: 'top',    label: 'Top Border',    min: -dimensions.height, max: dimensions.height },
+    { key: 'bottom', label: 'Bottom Border', min: -dimensions.height, max: dimensions.height },
+    { key: 'left',   label: 'Left Border',   min: -dimensions.width,  max: dimensions.width  },
+    { key: 'right',  label: 'Right Border',  min: -dimensions.width,  max: dimensions.width  }
+];
+
+borderConfigs.forEach(({ key, label, min, max }) => {
+    oobBordersFolder.add(oobBorders, key, min, max)
+        .name(label)
+        .onFinishChange(value => { oobBorders[key] = value; })
+        .listen();
+});
 
 
 /* COLORS */
@@ -120,6 +126,46 @@ function addColors() {
 addColors();
 
 
-/* gui.domElement.style.position = 'absolute';
-gui.domElement.style.top = '10px';
-gui.domElement.style.right = '10px'; */
+/* PARTICLES */
+particleFolder.add({respawn: () => {
+    textParticles = [];
+    setTextParticleCount(particleCount);
+}}, 'respawn').name('Respawn Particles');
+
+particleFolder.add({value: particleText}, 'value').name('Particle Text').onChange((value) => {
+    particleText = value;
+    textParticles.forEach((particle) => {
+        if (particle.tag !== "main") {
+            particle.text = particleText; // Update text for all particles except the main one
+        }
+    });
+}).listen();
+
+particleFolder.add({value: particleCount}, 'value', 0, 1000, 1).name('Particle Count').onChange((value) => {
+    particleCount = value;
+    setTextParticleCount(particleCount); // Reset text particles count
+}).listen();
+
+particleFolder.add({value: defaultParticleSize}, 'value', 10, 500, 1).name('Default Particle Size').onFinishChange((value) => {
+    defaultParticleSize = value;
+    textParticles = [];
+    setTextParticleCount(particleCount); // Reset text particles count
+}).listen();
+
+particleFolder.add({value: repulsionDistMult}, 'value', 0.1, 5, 0.1).name('Repulsion Distance Multiplier').onChange((value) => {
+    repulsionDistMult = value;
+}).listen();
+
+particleFolder.add({value: friction}, 'value', 0, 1, 0.01).name('Particle Friction').onChange((value) => {
+    friction = value;
+}).listen();
+
+particleFolder.add({value: maxVelocity}, 'value', 0, 50, 0.01).name('Particle Max Velocity').onChange((value) => {
+    maxVelocity = value;
+}).listen();
+
+
+/* OTHER */
+otherFolder.add({debug: () => {
+    debugMode = !debugMode;
+}}, 'debug').name('Toggle Debug Mode');

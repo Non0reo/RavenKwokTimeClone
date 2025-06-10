@@ -1,3 +1,5 @@
+const COLLISION_METHOD = 1;
+
 class TextParticle extends PointForce {
   constructor(options = {}) {
     super(options);
@@ -89,16 +91,39 @@ class TextParticle extends PointForce {
   update() {
 
     //prevent particles from going out of bounds without killing them
-    if (
-      this.position.x < oobBorders.left || this.position.x > width + oobBorders.right ||
-      this.position.y < oobBorders.top || this.position.y > height + oobBorders.bottom
-    ) {
-      this.position.x = constrain(this.position.x, oobBorders.left, width + oobBorders.right);
-      this.position.y = constrain(this.position.y, oobBorders.top, height + oobBorders.bottom);
+    if (COLLISION_METHOD === 0) {
+      if (
+        this.position.x < oobBorders.left || this.position.x > width + oobBorders.right ||
+        this.position.y < oobBorders.top || this.position.y > height + oobBorders.bottom
+      ) {
+        this.position.x = constrain(this.position.x, oobBorders.left, width + oobBorders.right);
+        this.position.y = constrain(this.position.y, oobBorders.top, height + oobBorders.bottom);
+      }
+    }
+    else if (COLLISION_METHOD === 1) {
+      const forceRadius = (this.size * repulsionDistMult) / 2;
+
+      if (
+        this.position.x - forceRadius < oobBorders.left ||
+        this.position.x + forceRadius > width + oobBorders.right ||
+        this.position.y - forceRadius < oobBorders.top ||
+        this.position.y + forceRadius > height + oobBorders.bottom
+      ) {
+        this.position.x = constrain(
+        this.position.x,
+        oobBorders.left + forceRadius,
+        width + oobBorders.right - forceRadius
+        );
+        this.position.y = constrain(
+        this.position.y,
+        oobBorders.top + forceRadius,
+        height + oobBorders.bottom - forceRadius
+        );
+      }
     }
 
     // Apply velocity to positionition
-    //this.velocity.limit(2); // Limit the velocity to prevent excessive speed
+    this.velocity.limit(maxVelocity); // Limit the velocity to prevent excessive speed
 
     // Use a fixed decay factor for addedSize to avoid unnecessary calculations and reduce lag
     if (abs(this.addedSize) > 0.1) {
@@ -114,7 +139,7 @@ class TextParticle extends PointForce {
       this.position.y += this.velocity.y;
     }
     
-    this.velocity.mult(0.8);
+    this.velocity.mult(1 - friction);
   }
 
 
