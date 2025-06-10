@@ -131,3 +131,19 @@ function setTextParticleCount(count, textIn = "•") {
         }
     }
 }
+
+
+function resizeCanvasToWindow() {
+    const aspectRatio = width / height;
+    const windowAspect = window.innerWidth / window.innerHeight;
+
+    if (aspectRatio > windowAspect) {
+        // Fit width
+        canvas.style('width', window.innerWidth + 'px');
+        canvas.style('height', (window.innerWidth / aspectRatio) + 'px');
+    } else {
+        // Fit height
+        canvas.style('height', window.innerHeight + 'px');
+        canvas.style('width', (window.innerHeight * aspectRatio) + 'px');
+    }
+}

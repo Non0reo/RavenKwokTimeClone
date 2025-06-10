@@ -1,18 +1,5 @@
 p5.disableFriendlyErrors = true;
 
-const canvasSizeMultiplier = 1; // Multiplier for canvas size
-//const colors = ['#03fcd3', '#f279e4', '#f2ea79', '#ac79f2', '#ff5996'];
-const colors = ['#f29538', '#edd42d', '#fc7419', '#ffff8c'];
-const defaultParticleSize = canvasSizeMultiplier * 130; // Default size for new particles
-
-let oobKill = {
-  top: 0,
-  bottom: defaultParticleSize / 2,
-  left: 200,
-  right: -200,
-}
-let repulsionDistMult = 1.3;
-let debugMode = false; // Debug mode flag.
 let remaningSeconds = 100; // Remaining seconds for timer
 let temp_seconds, seconds;
 
@@ -77,27 +64,14 @@ function setup() {
   
     
 
-  function resizeCanvasToWindow() {
-    const aspectRatio = width / height;
-    const windowAspect = window.innerWidth / window.innerHeight;
 
-    if (aspectRatio > windowAspect) {
-      // Fit width
-      canvas.style('width', window.innerWidth + 'px');
-      canvas.style('height', (window.innerWidth / aspectRatio) + 'px');
-    } else {
-      // Fit height
-      canvas.style('height', window.innerHeight + 'px');
-      canvas.style('width', (window.innerHeight * aspectRatio) + 'px');
-    }
-  }
 
   resizeCanvasToWindow();
   window.addEventListener('resize', resizeCanvasToWindow);
 
 
-  font = opentype.parse(fontData.bytes.buffer);
-  console.log("Font loaded:", font);
+  // font = opentype.parse(fontData.bytes.buffer);
+  // console.log("Font loaded:", font);
   textFont(rawFont);
   textSize(this.size);
   textAlign(CENTER, CENTER);
