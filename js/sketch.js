@@ -31,7 +31,7 @@ function preload() {
   for (let i = 0; i < shaderNames.length; i++) {
     shaders.push({
       name: shaderNames[i],
-      content: loadStrings(`../shaders/${shaderNames[i]}.frag`),
+      content: loadStrings(`./shaders/${shaderNames[i]}.frag`),
       s: null,
       filter: () => {
         filter(getShader(i));
