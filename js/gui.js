@@ -32,11 +32,12 @@ let gui = new dat.GUI({
 });
 gui.useLocalStorage = true; // Enable local storage to save GUI state
 
+
+
 let canvasFolder = gui.addFolder('Canvas');
 let colorsFolder = gui.addFolder('Colors');
 let particleFolder = gui.addFolder('Particles');
 let otherFolder = gui.addFolder('Other');
-colorsFolder.open();
 
 /* CANVAS */
 canvasFolder.add(dimensions, 'width').name('Canvas Width').onFinishChange((value) => {
@@ -52,7 +53,6 @@ canvasFolder.add(dimensions, 'height').name('Canvas Height').onFinishChange((val
     resizeCanvas(dimensions.width * canvasSizeMultiplier, value * canvasSizeMultiplier);
     resizeCanvasToWindow();
 }).listen();
-canvasFolder.open();
 
 canvasFolder.add({click: () => {
     dimensions.width = 3600;
@@ -142,14 +142,12 @@ particleFolder.add({value: particleText}, 'value').name('Particle Text').onChang
 }).listen();
 
 particleFolder.add({value: particleCount}, 'value', 0, 1000, 1).name('Particle Count').onChange((value) => {
-    particleCount = value;
-    setTextParticleCount(particleCount); // Reset text particles count
+    respawnParticles()
 }).listen();
 
 particleFolder.add({value: defaultParticleSize}, 'value', 10, 500, 1).name('Default Particle Size').onFinishChange((value) => {
     defaultParticleSize = value;
-    textParticles = [];
-    setTextParticleCount(particleCount); // Reset text particles count
+    respawnParticles()
 }).listen();
 
 particleFolder.add({value: repulsionDistMult}, 'value', 0.1, 5, 0.1).name('Repulsion Distance Multiplier').onChange((value) => {
@@ -164,8 +162,93 @@ particleFolder.add({value: maxVelocity}, 'value', 0, 50, 0.01).name('Particle Ma
     maxVelocity = value;
 }).listen();
 
+//toggle mouse collision
+particleFolder.add({toggleMouseCollision: () => {
+    forces.forEach(force => {
+        if (force instanceof PointForce) {
+            force.doColision = !force.doColision; // Toggle collision for all PointForce instances
+        }
+    });
+}}, 'toggleMouseCollision').name('Toggle Mouse Collision');
+
 
 /* OTHER */
 otherFolder.add({debug: () => {
     debugMode = !debugMode;
 }}, 'debug').name('Toggle Debug Mode');
+
+otherFolder.add({saveData: () => {
+    const data = {
+        Canvas: {
+            width: dimensions.width,
+            height: dimensions.height,
+            'Canvas Size Multiplier': canvasSizeMultiplier,
+            'Out of Bounds Borders': { ...oobBorders }
+        },
+        Colors: {
+            colors: colors.slice()
+        },
+        Particles: {
+            'Particle Text': particleText,
+            'Particle Count': particleCount,
+            'Default Particle Size': defaultParticleSize,
+            'Repulsion Distance Multiplier': repulsionDistMult,
+            'Particle Friction': friction,
+            'Particle Max Velocity': maxVelocity
+        }
+    };
+    const json = JSON.stringify(data, null, 2);
+    navigator.clipboard.writeText(json).then(() => {
+        alert("Parameters copied to clipboard!");
+    }).catch(() => {
+        prompt("Copy the parameters JSON below:", json);
+    });
+}}, 'saveData').name('Save Parrameters');
+
+otherFolder.add({loadData: () => {
+    let input = prompt("Paste the saved parameters JSON here:");
+    if (input) {
+        try {
+            
+            let data = JSON.parse(input);
+            console.log(data);
+            // Manually update variables if needed
+            if (data) {
+                if (data.Canvas) {
+                    if (data.Canvas.width !== undefined) dimensions.width = data.Canvas.width;
+                    if (data.Canvas.height !== undefined) dimensions.height = data.Canvas.height;
+                    if (data.Canvas['Canvas Size Multiplier'] !== undefined) canvasSizeMultiplier = data.Canvas['Canvas Size Multiplier'];
+                    if (data.Canvas['Out of Bounds Borders']) {
+                        Object.assign(oobBorders, data.Canvas['Out of Bounds Borders']);
+                    }
+                }
+                if (data.Colors && Array.isArray(data.Colors.colors)) {
+                    colors = data.Colors.colors.slice();
+                    addColors();
+                }
+                if (data.Particles) {
+                    if (data.Particles['Particle Text'] !== undefined) particleText = data.Particles['Particle Text'];
+                    if (data.Particles['Particle Count'] !== undefined) particleCount = data.Particles['Particle Count'];
+                    if (data.Particles['Default Particle Size'] !== undefined) defaultParticleSize = data.Particles['Default Particle Size'];
+                    if (data.Particles['Repulsion Distance Multiplier'] !== undefined) repulsionDistMult = data.Particles['Repulsion Distance Multiplier'];
+                    if (data.Particles['Particle Friction'] !== undefined) friction = data.Particles['Particle Friction'];
+                    if (data.Particles['Particle Max Velocity'] !== undefined) maxVelocity = data.Particles['Particle Max Velocity'];
+                }
+            }
+            // Update GUI controllers to reflect new values
+            gui.updateDisplay();
+            resizeCanvas(dimensions.width * canvasSizeMultiplier, dimensions.height * canvasSizeMultiplier);
+            resizeCanvasToWindow();
+            respawnParticles();
+        } catch (e) {
+            alert("Invalid JSON: " + e.message);
+        }
+    }
+}}, 'loadData').name('Load Parameters')
+
+
+
+function respawnParticles() {
+    textParticles = [];
+    setTextParticleCount(particleCount);
+}
