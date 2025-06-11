@@ -142,12 +142,14 @@ function draw() {
   }
 
   //add velocity using mouse mouvement only for the near particles
-  /* for (const particle of textParticles) {
-    if (dist(mouseX, mouseY, particle.position.x, particle.position.y) < particle.defaultSize * 2) {
-      particle.velocity.x += (mouseX - pmouseX) * 0.1; // Apply mouse movement to velocity
-      particle.velocity.y += (mouseY - pmouseY) * 0.1; // Apply mouse movement to velocity
+  if (mouseCollision) {
+    for (const particle of textParticles) {
+      if (dist(mouseX, mouseY, particle.position.x, particle.position.y) < particle.defaultSize * 2) {
+        particle.velocity.x += (mouseX - pmouseX) * 0.1; // Apply mouse movement to velocity
+        particle.velocity.y += (mouseY - pmouseY) * 0.1; // Apply mouse movement to velocity
+      }
     }
-  } */
+  }
 
   waves.forEach(wave => {
     wave.update(); // Update each wave
@@ -178,7 +180,43 @@ function draw() {
 
   debugCommands(); // Handle debug commands
 
-  if (debugMode) displayDebugInfo();
+  if (debugMode) {
+    for (const particle of textParticles) {
+        if (particle instanceof TextParticle) {
+            particle.debugDisplay();
+        }
+    }
+
+    for (const force of forces) {
+        if (force instanceof Force) {
+            force.debugDisplay();
+        }
+    }
+
+    push();
+      translate(0, 0, 20);
+      for (const wave of waves) {
+          wave.display();
+      }
+    pop();
+
+    push();
+        noFill();
+        stroke(0, 255, 0);
+        strokeWeight(5);
+        rectMode(CORNERS);
+        rect(oobBorders.left, oobBorders.top, width + oobBorders.right, height + oobBorders.bottom); // Draw the out-of-bounds rectangle
+        rectMode(CENTER);
+
+        resetMatrix(); // Reset the transformation matrix
+        translate(0, 0, 10)
+        strokeWeight(5);
+        stroke(0, 0, 255);
+        line(0, -height / 2, 0, height / 2); // Vertical line
+        line(-width / 2, 0, width / 2, 0); // Horizontal line
+    pop();
+    displayDebugInfo();
+  }
 
   //filter(shaders[0]);
   buffer0.end();
@@ -210,13 +248,3 @@ function draw() {
   image(buffer0, 0, 0);
   
 }
-
-
-function keyPressed() {
-  if (key === 'w') startCountdown();
-  if (key === 'q') {
-    startCountdown();
-    countdownNumber = 3;
-  };
-}
-

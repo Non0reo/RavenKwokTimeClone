@@ -1,10 +1,13 @@
 let canvasSizeMultiplier = 1; // Multiplier for canvas size
+let colorCount = 4; // Number of colors in the palette
 let colors = ['#f29538', '#edd42d', '#fc7419', '#ffff8c'];
 let defaultParticleSize = canvasSizeMultiplier * 130; // Default size for new particles
 let friction = 0.2; // Friction applied to particles
 let particleCount = 450; // Number of particles to generate
 let particleText = "<3"; // Default text for particles
 let maxVelocity = 50; // Maximum velocity for particles
+let mouseCollision = true; // Toggle mouse collision for particles
+let doRotation = false; // Toggle rotation for particles
 
 let oobBorders = {
     top: 0,
@@ -40,35 +43,31 @@ let particleFolder = gui.addFolder('Particles');
 let otherFolder = gui.addFolder('Other');
 
 /* CANVAS */
-canvasFolder.add(dimensions, 'width').name('Canvas Width').onFinishChange((value) => {
-    dimensions.width = value;
-    console.log('Canvas width changed to:', value);
-    resizeCanvas(value * canvasSizeMultiplier, dimensions.height * canvasSizeMultiplier);
-    resizeCanvasToWindow();
+canvasFolder.add(dimensions, 'width', 1, 5000, 1).name('Canvas Width').onFinishChange((value) => {
+    setCanvasSize(value, dimensions.height);
 }).listen();
 
-canvasFolder.add(dimensions, 'height').name('Canvas Height').onFinishChange((value) => {
-    dimensions.height = value;
-    console.log('Canvas height changed to:', value);
-    resizeCanvas(dimensions.width * canvasSizeMultiplier, value * canvasSizeMultiplier);
-    resizeCanvasToWindow();
+canvasFolder.add(dimensions, 'height', 1, 5000, 1).name('Canvas Height').onFinishChange((value) => {
+    setCanvasSize(dimensions.width, value);
 }).listen();
 
 canvasFolder.add({click: () => {
-    dimensions.width = 3600;
-    dimensions.height = 3268;
-    resizeCanvas(dimensions.width * canvasSizeMultiplier, dimensions.height * canvasSizeMultiplier);
-    resizeCanvasToWindow();
+    setCanvasSize(3600, 3268);
     console.log('Canvas size reset to default:', dimensions.width, 'x', dimensions.height);
 }}, 'click').name('Reset Canvas Size');
 
-canvasFolder.add({value: canvasSizeMultiplier}, 'value', 0.1, 2, 0.1).name('Canvas Size Multiplier').onFinishChange((value) => {
-    // Update the canvas size multiplier and resize the canvas
+canvasFolder.add({canvasSizeMultiplier}, 'canvasSizeMultiplier', 0.1, 2, 0.1).name('Canvas Size Multiplier').onFinishChange((value) => {
     canvasSizeMultiplier = value;
+    setCanvasSize(dimensions.width, dimensions.height);
     console.log('Canvas size multiplier changed to:', value);
+}).listen();
+
+function setCanvasSize(width, height) {
+    dimensions.width = width;
+    dimensions.height = height;
     resizeCanvas(dimensions.width * canvasSizeMultiplier, dimensions.height * canvasSizeMultiplier);
     resizeCanvasToWindow();
-}).listen();
+}
 
 
 // Out of Bounds Borders controls
@@ -89,7 +88,7 @@ borderConfigs.forEach(({ key, label, min, max }) => {
 
 
 /* COLORS */
-let sliderColor = colorsFolder.add({value: colors.length}, 'value', 0, 10, 1).name('Number of Color').onChange((value) => {
+colorsFolder.add({colorCount}, 'colorCount', 1, 10, 1).name('Number of Color').onChange((value) => {
     //set the length of colors array to value and fill it with random colors, add color to the gui so they can be changed
     
     if(value === colors.length) return; // No change if the value is the same as the current length
@@ -108,7 +107,7 @@ let sliderColor = colorsFolder.add({value: colors.length}, 'value', 0, 10, 1).na
 
 
 function addColors() {
-    colorsFolder.__controllers.filter(controller => controller.property !== 'value').forEach(controller => {
+    colorsFolder.__controllers.filter(controller => controller.property !== 'colorCount').forEach(controller => {
         controller.remove();
     });
 
@@ -119,11 +118,23 @@ function addColors() {
         
         colorsFolder.addColor(palette, colorKey).name(`Color ${i + 1}`).onChange((value) => {
             colors[i] = value; // Update the colors array with the new value
-            console.log(`Color ${i + 1} changed to:`, value);
+            //console.log(`Color ${i + 1} changed to:`, value);
         });
     }
 }
-addColors();
+
+
+function setColors(palette) {
+    colors = palette;
+    colorsFolder.__controllers.forEach(controller => {
+        if (controller.property.startsWith('color')) {
+            const index = parseInt(controller.property.replace('color', '')) - 1;
+            controller.setValue(colors[index]);
+        }
+    });
+    colorsFolder.__controllers.find(controller => controller.property === 'colorCount').setValue(colors.length);
+}
+setColors(colors);
 
 
 /* PARTICLES */
@@ -132,7 +143,7 @@ particleFolder.add({respawn: () => {
     setTextParticleCount(particleCount);
 }}, 'respawn').name('Respawn Particles');
 
-particleFolder.add({value: particleText}, 'value').name('Particle Text').onChange((value) => {
+particleFolder.add({particleText}, 'particleText').name('Particle Text').onChange((value) => {
     particleText = value;
     textParticles.forEach((particle) => {
         if (particle.tag !== "main") {
@@ -141,114 +152,125 @@ particleFolder.add({value: particleText}, 'value').name('Particle Text').onChang
     });
 }).listen();
 
-particleFolder.add({value: particleCount}, 'value', 0, 1000, 1).name('Particle Count').onChange((value) => {
+particleFolder.add({particleCount}, 'particleCount', 0, 1000, 1).name('Particle Count').onChange((value) => {
+    particleCount = value;
     respawnParticles()
 }).listen();
 
-particleFolder.add({value: defaultParticleSize}, 'value', 10, 500, 1).name('Default Particle Size').onFinishChange((value) => {
+particleFolder.add({defaultParticleSize}, 'defaultParticleSize', 0, 500, 1).name('Default Particle Size').onFinishChange((value) => {
     defaultParticleSize = value;
     respawnParticles()
 }).listen();
 
-particleFolder.add({value: repulsionDistMult}, 'value', 0.1, 5, 0.1).name('Repulsion Distance Multiplier').onChange((value) => {
+particleFolder.add({repulsionDistMult}, 'repulsionDistMult', 0.1, 5, 0.1).name('Repulsion Distance Multiplier').onChange((value) => {
     repulsionDistMult = value;
 }).listen();
 
-particleFolder.add({value: friction}, 'value', 0, 1, 0.01).name('Particle Friction').onChange((value) => {
+particleFolder.add({friction}, 'friction', 0, 1, 0.01).name('Particle Friction').onChange((value) => {
     friction = value;
 }).listen();
 
-particleFolder.add({value: maxVelocity}, 'value', 0, 50, 0.01).name('Particle Max Velocity').onChange((value) => {
+particleFolder.add({maxVelocity}, 'maxVelocity', 0, 50, 0.01).name('Particle Max Velocity').onChange((value) => {
     maxVelocity = value;
 }).listen();
 
-//toggle mouse collision
-particleFolder.add({toggleMouseCollision: () => {
-    forces.forEach(force => {
-        if (force instanceof PointForce) {
-            force.doColision = !force.doColision; // Toggle collision for all PointForce instances
-        }
-    });
-}}, 'toggleMouseCollision').name('Toggle Mouse Collision');
+particleFolder.add({mouseCollision}, 'mouseCollision').name('Mouse Collision').onChange((value) => {
+    mouseCollision = value;
+}).listen();
 
+particleFolder.add({doRotation}, 'doRotation').name('Do Rotation').onChange((value) => {
+    doRotation = value;
+}).listen();
 
 /* OTHER */
-otherFolder.add({debug: () => {
-    debugMode = !debugMode;
-}}, 'debug').name('Toggle Debug Mode');
+otherFolder.add({debugMode}, 'debugMode').name('Debug Mode').onChange((value) => {
+    debugMode = value;
+}).listen();
 
+// Save Parameters: Dynamically collect all GUI values
 otherFolder.add({saveData: () => {
-    const data = {
-        Canvas: {
-            width: dimensions.width,
-            height: dimensions.height,
-            'Canvas Size Multiplier': canvasSizeMultiplier,
-            'Out of Bounds Borders': { ...oobBorders }
-        },
-        Colors: {
-            colors: colors.slice()
-        },
-        Particles: {
-            'Particle Text': particleText,
-            'Particle Count': particleCount,
-            'Default Particle Size': defaultParticleSize,
-            'Repulsion Distance Multiplier': repulsionDistMult,
-            'Particle Friction': friction,
-            'Particle Max Velocity': maxVelocity
+    function getControllerValue(controller) {
+        // Handles .object and .property or .getValue()
+        if (controller.getValue) return controller.getValue();
+        if (controller.object && controller.property !== undefined) return controller.object[controller.property];
+        return undefined;
+    }
+    function traverseFolder(folder) {
+        let data = {};
+        // Controllers
+        folder.__controllers.forEach(ctrl => data[ctrl.property || ctrl.name] = getControllerValue(ctrl));
+        // Subfolders
+        if (folder.__folders) {
+            Object.entries(folder.__folders).forEach(([name, subfolder]) => {
+                data[name] = traverseFolder(subfolder);
+            });
         }
-    };
+        return data;
+    }
+    const data = traverseFolder(gui);
     const json = JSON.stringify(data, null, 2);
     navigator.clipboard.writeText(json).then(() => {
         alert("Parameters copied to clipboard!");
     }).catch(() => {
         prompt("Copy the parameters JSON below:", json);
     });
-}}, 'saveData').name('Save Parrameters');
 
+    console.warn("Parameters saved:", json);
+}}, 'saveData').name('Save Parameters');
+
+// Load Parameters: Dynamically set all GUI values
 otherFolder.add({loadData: () => {
     let input = prompt("Paste the saved parameters JSON here:");
     if (input) {
         try {
-            
-            let data = JSON.parse(input);
-            console.log(data);
-            // Manually update variables if needed
-            if (data) {
-                if (data.Canvas) {
-                    if (data.Canvas.width !== undefined) dimensions.width = data.Canvas.width;
-                    if (data.Canvas.height !== undefined) dimensions.height = data.Canvas.height;
-                    if (data.Canvas['Canvas Size Multiplier'] !== undefined) canvasSizeMultiplier = data.Canvas['Canvas Size Multiplier'];
-                    if (data.Canvas['Out of Bounds Borders']) {
-                        Object.assign(oobBorders, data.Canvas['Out of Bounds Borders']);
-                    }
-                }
-                if (data.Colors && Array.isArray(data.Colors.colors)) {
-                    colors = data.Colors.colors.slice();
-                    addColors();
-                }
-                if (data.Particles) {
-                    if (data.Particles['Particle Text'] !== undefined) particleText = data.Particles['Particle Text'];
-                    if (data.Particles['Particle Count'] !== undefined) particleCount = data.Particles['Particle Count'];
-                    if (data.Particles['Default Particle Size'] !== undefined) defaultParticleSize = data.Particles['Default Particle Size'];
-                    if (data.Particles['Repulsion Distance Multiplier'] !== undefined) repulsionDistMult = data.Particles['Repulsion Distance Multiplier'];
-                    if (data.Particles['Particle Friction'] !== undefined) friction = data.Particles['Particle Friction'];
-                    if (data.Particles['Particle Max Velocity'] !== undefined) maxVelocity = data.Particles['Particle Max Velocity'];
+            const data = JSON.parse(input);
+
+            function setControllerValue(controller, value) {
+                // Try to use setValue if available, else set directly
+                if (controller.setValue) controller.setValue(value);
+                else if (controller.object && controller.property !== undefined) controller.object[controller.property] = value;
+                if (controller.__onFinishChange) {
+                    controller.__onFinishChange(value)
                 }
             }
-            // Update GUI controllers to reflect new values
+            function traverseAndSet(folder, values) {
+                // Set controllers
+                folder.__controllers.forEach(ctrl => {
+                    if (ctrl.property in values) setControllerValue(ctrl, values[ctrl.property]);
+                });
+                // Set subfolders
+                if (folder.__folders) {
+                    Object.entries(folder.__folders).forEach(([name, subfolder]) => {
+                        if (values[name]) traverseAndSet(subfolder, values[name]);
+                    });
+                }
+            }
+            traverseAndSet(gui, data);
+
             gui.updateDisplay();
-            resizeCanvas(dimensions.width * canvasSizeMultiplier, dimensions.height * canvasSizeMultiplier);
-            resizeCanvasToWindow();
-            respawnParticles();
+            resetScene(data);
         } catch (e) {
             alert("Invalid JSON: " + e.message);
         }
     }
-}}, 'loadData').name('Load Parameters')
+}}, 'loadData').name('Load Parameters');
 
 
 
 function respawnParticles() {
     textParticles = [];
     setTextParticleCount(particleCount);
+}
+
+function resetScene(data) {
+    // Reset scene using the current GUI settings
+    //resizeCanvas(dimensions.width * canvasSizeMultiplier, dimensions.height * canvasSizeMultiplier);
+    //resizeCanvasToWindow();
+
+    const dataColors = Array.from({ length: data.Colors.colorCount }, (_, i) => data.Colors[`color${i + 1}`] || '#000000');
+    setColors(dataColors);
+
+    textParticles = [];
+    setTextParticleCount(particleCount);
+
 }

@@ -17,6 +17,7 @@ class TextParticle extends PointForce {
     this.position = createVector(options.x || 0, options.y || 0);
     this.desiredPosition = createVector(options.xDesired || 0, options.yDesired || 0);
     this.velocity = createVector(0, 0);
+    this.rotation = options.rotation || 0;
 
     // Size
     this.defaultSize = options.size || 0;
@@ -134,6 +135,11 @@ class TextParticle extends PointForce {
 
     this.size = this.defaultSize + this.addedSize; // Update size based on distance to mouse
 
+    if (doRotation) {
+      const angle = atan2(this.velocity.y, this.velocity.x);
+      this.rotation = angle + PI; // Update rotation based on velocity direction
+    }
+
     if (!this.isStatic && this.doColision) {
       this.position.x += this.velocity.x;
       this.position.y += this.velocity.y;
@@ -148,57 +154,27 @@ class TextParticle extends PointForce {
     
     //this.isStatic ? fill(255) : fill(lerpColor(this.defaultColor, this.brightColor, this.addedSize / 100));
     fill(lerpColor(this.defaultColor, this.brightColor, this.addedSize / 100));
+    
+    push();
+    translate(this.position.x, this.position.y); // Center the particle at its position
+    if (doRotation) rotate(this.rotation); // Rotate the particle based on its velocity direction
+    //scale(mouseX / width); // Scale the particle based on mouse position
+    
     textAlign(CENTER, CENTER);
     textSize(this.size);
-    text(this.text, this.position.x + this.size * 0.01, this.position.y - this.size / 7);
-
-    push();
-    //translate(-this.defaultSize * 0.21, this.defaultSize * 0.38); // Adjust position to center the text path
-    //scale(0.5); // Scale down the text path for better visibility
-    translate(this.position.x, this.position.y); // Center the text path at the particle's position
-    //rotate(mouseX * 0.002 + mouseY * 0.002); // Rotate based on mouse position for a dynamic effect
-
-    //draw a circle at each path point if doDrawTextPath is true
-    if (this.doDrawTextPath) {
-      beginShape();
-      this.textPath.commands.forEach(cmd => {
-      if (cmd.type === 'M') {
-        // Move to (start new shape)
-        vertex(cmd.x + this.position.x, cmd.y + this.position.y);
-      } else if (cmd.type === 'L') {
-        // Line to
-        vertex(cmd.x + this.position.x, cmd.y + this.position.y);
-      } else if (cmd.type === 'C') {
-        // Bezier curve
-        bezierVertex(
-        cmd.x1 + this.position.x, cmd.y1 + this.position.y,
-        cmd.x2 + this.position.x, cmd.y2 + this.position.y,
-        cmd.x + this.position.x, cmd.y + this.position.y
-        );
-      } else if (cmd.type === 'Q') {
-        // Quadratic curve
-        quadraticVertex(
-        cmd.x1 + this.position.x, cmd.y1 + this.position.y,
-        cmd.x + this.position.x, cmd.y + this.position.y
-        );
-      } else if (cmd.type === 'Z') {
-        // Close shape
-        endShape(CLOSE);
-        beginShape();
-      }
-      });
-      endShape();
-    } 
+    text(this.text, 0, -this.size / 7);
 
     pop();
+
   }
 
 
   applyWaveEffect(wave, particlesOptions = {}) {
-    const { text, size, color } = particlesOptions; // Destructure options for text and size
+    const { text, size, color, addedSize } = particlesOptions; // Destructure options for text and size
+    console.log(text, size, color, addedSize);
 
     if (!this.doColision) return; // Skip if not colliding
-    this.addedSize = 100;
+    this.addedSize = addedSize;
 
     let distance = dist(this.position.x, this.position.y, wave.x, wave.y);
     if (distance < wave.radius) {

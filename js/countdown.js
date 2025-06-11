@@ -38,7 +38,6 @@ function waveEffectLoop() {
 } */
 
 let countdownNumber = 10;
-let appliedSize = defaultParticleSize;
 
 function summonDefaultWave() {
     let centerX = width / 2;
@@ -63,21 +62,24 @@ class Wave {
         }; */
         this.appliedOptions = apOp || {
             text: countdownNumber.toString(),
-            size: appliedSize,
-            color: undefined
+            size: defaultParticleSize,
+            color: undefined,
+            addedSize: 100
         };
     }
 
     update() {
-        this.radius = lerp(this.radius, this.targetedRadius, 0.02); // Smoothly increase the wave radius
+        this.radius = lerp(this.radius, this.targetedRadius, 0.02 /* * Math.pow(1/canvasSizeMultiplier, -0.5) */ ); // Smoothly increase the wave radius
 
         // Apply the wave effect to particles next to the wave
         for (let particle of textParticles) {
             let distance = dist(particle.position.x, particle.position.y, this.x, this.y);
             if (distance < this.radius && distance > this.radius - lerp(this.radius / 4, 50, this.radius/this.targetedRadius)) { // Check if particle is within the wave's radius
                 particle.applyWaveEffect(this, {
-                    text: countdownNumber.toString(),
-                    size: appliedSize,
+                    text: this.appliedOptions.text,
+                    size: this.appliedOptions.size,
+                    color: this.appliedOptions.color,
+                    addedSize: this.appliedOptions.addedSize
                 });
             }
         }
@@ -85,7 +87,7 @@ class Wave {
         //this.display(); // Display the wave circle
 
         // If the wave radius exceeds the end radius, remove the wave
-        if (this.radius >= this.targetedRadius) {
+        if (this.radius >= this.targetedRadius - 1 / canvasSizeMultiplier) {
             this.remove();
         }
 

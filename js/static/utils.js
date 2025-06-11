@@ -18,40 +18,7 @@ function displayDebugInfo() {
 }
 
 function debugCommands() {
-    if(keyIsPressed) {
-        switch (key) {
-            case ' ':
-                textParticles = []; // Clear particles on spacebar press
-                break;
-            /* case 'd':
-                //display the force cicle for all Force objects in the textParticles array
-                for (const force of forces) {
-                    if (force instanceof Force) {
-                        force.debugDisplay();
-                    }
-                }
 
-                push();
-                    resetMatrix(); // Reset the transformation matrix
-                    strokeWeight(5);
-                    stroke(0, 0, 255);
-                    line(0, -height / 2, 0, height / 2); // Vertical line
-                    line(-width / 2, 0, width / 2, 0); // Horizontal line
-                pop();
-                
-                debugMode = true;
-            
-                break; */
-
-            case 'f':
-                for (const particle of textParticles) {
-                    if (particle instanceof TextParticle) {
-                        particle.debugDisplay();
-                    }
-                }
-                break;
-        }
-    }
 }
 
 
@@ -105,8 +72,10 @@ function setTextParticleCount(count, textIn = particleText) {
                     text: textIn,
                     // x: width / 2 + random(-10,10),
                     // y: height / 2 + random(-10,10),
-                    x: random(width),
-                    y: random(height),
+                    // x: random(width),
+                    // y: random(height),
+                    x: random(oobBorders.left, width + oobBorders.right),
+                    y: random(oobBorders.top, height + oobBorders.bottom),
                     size: defaultParticleSize,
                     //size: random(defaultParticleSize * 0.5, defaultParticleSize * 1),
                 })
