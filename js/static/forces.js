@@ -37,7 +37,7 @@ class PointForce extends Force {
     }
     debugDisplay() {
         if (!this.doColision) return;
-        fill(255, 0, 0, 130);
+        fill(255, 0, 0, 100);
         circle(this.position.x, this.position.y, this.size * repulsionDistMult);
     }
 

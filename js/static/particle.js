@@ -156,9 +156,17 @@ class TextParticle extends PointForce {
     fill(lerpColor(this.defaultColor, this.brightColor, this.addedSize / 100));
     
     push();
-    translate(this.position.x, this.position.y); // Center the particle at its position
-    if (doRotation) rotate(this.rotation); // Rotate the particle based on its velocity direction
-    //scale(mouseX / width); // Scale the particle based on mouse position
+    translate(this.position.x, this.position.y);
+    
+    //rotateY(frameCount * 0.01);
+    
+    //translate(0, 0, -100);
+    //translate(0, 0, sin(frameCount * 0.01 + this.position.x / width * 4) * 200); // Move the text up to avoid z-fighting with the ground plane
+    
+    //rotateX(PI / 2);
+    //if (doRotation) rotate(this.rotation);
+    
+    //scale(mouseX / width);
     
     textAlign(CENTER, CENTER);
     textSize(this.size);
