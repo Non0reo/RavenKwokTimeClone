@@ -164,7 +164,7 @@ class TextParticle extends PointForce {
     //translate(0, 0, sin(frameCount * 0.01 + this.position.x / width * 4) * 200); // Move the text up to avoid z-fighting with the ground plane
     
     //rotateX(PI / 2);
-    //if (doRotation) rotate(this.rotation);
+    if (doRotation) rotate(this.rotation);
     
     //scale(mouseX / width);
     

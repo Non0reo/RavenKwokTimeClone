@@ -8,6 +8,7 @@ let particleText = "<3"; // Default text for particles
 let maxVelocity = 50; // Maximum velocity for particles
 let mouseCollision = true; // Toggle mouse collision for particles
 let doRotation = false; // Toggle rotation for particles
+let thirdDView = false; // Toggle 3D view for the canvas
 
 let oobBorders = {
     top: 0,
@@ -60,6 +61,16 @@ canvasFolder.add({canvasSizeMultiplier}, 'canvasSizeMultiplier', 0.1, 2, 0.1).na
     canvasSizeMultiplier = value;
     setCanvasSize(dimensions.width, dimensions.height);
     console.log('Canvas size multiplier changed to:', value);
+}).listen();
+
+canvasFolder.add({thirdDView}, 'thirdDView').name('3D View').onChange((value) => {
+    thirdDView = value;
+    if (!value) {
+        buffer0.begin();
+        resetMatrix();
+        camera(0, 0, 800, 0, 0, 0, 0, 1, 0);
+        buffer0.end();
+    }
 }).listen();
 
 function setCanvasSize(width, height) {
